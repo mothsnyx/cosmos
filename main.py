@@ -82,34 +82,46 @@ async def on_ready():
 # Commands
 @client.tree.command(name="create_character", description="Create your character")
 async def create_character(interaction: discord.Interaction, name: str, nen_type: str):
-    if name in client.characters:
+    conn = connect()
+    cursor = conn.cursor()
+    
+    # Check if character exists
+    cursor.execute("SELECT character_name FROM profiles WHERE character_name = ?", (name,))
+    if cursor.fetchone():
         await interaction.response.send_message("A character with this name already exists!")
+        conn.close()
         return
-        
-    client.characters[name] = Character(
-        name=name,
-        nen_type=nen_type,
-        hp=100,
-        max_hp=100,
-        inventory={"items": [], "consumables": []},
-        coins=100,
-        owner_id=str(interaction.user.id)
-    )
+    
+    # Create character
+    cursor.execute("""
+    INSERT INTO profiles (user_id, character_name, nen_type, hp, level)
+    VALUES (?, ?, ?, ?, ?)
+    """, (interaction.user.id, name, nen_type, 100, 0))
+    conn.commit()
+    conn.close()
+    
     await interaction.response.send_message(f"Character created: {name} ({nen_type})")
 
 @client.tree.command(name="list_characters", description="List all your characters")
 async def list_characters(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
-    user_characters = [char for char in client.characters.values() if char.owner_id == user_id]
+    conn = connect()
+    cursor = conn.cursor()
     
-    if not user_characters:
+    cursor.execute("""
+    SELECT character_name, nen_type, hp, level FROM profiles
+    WHERE user_id = ?
+    """, (interaction.user.id,))
+    characters = cursor.fetchall()
+    conn.close()
+    
+    if not characters:
         await interaction.response.send_message("You don't have any characters yet!")
         return
         
     embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
-    for char in user_characters:
-        embed.add_field(name=char.name, 
-                       value=f"Level: {char.level}\nNen Type: {char.nen_type}\nHP: {char.hp}/{char.max_hp}",
+    for char in characters:
+        embed.add_field(name=char[0], 
+                       value=f"Level: {char[3]}\nNen Type: {char[1]}\nHP: {char[2]}/100",
                        inline=False)
     await interaction.response.send_message(embed=embed)
 
