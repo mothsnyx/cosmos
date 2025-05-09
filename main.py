@@ -170,6 +170,13 @@ async def profile(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="explore", description="Explore an area")
+@app_commands.choices(area=[
+    app_commands.Choice(name="High School (Easy) - Level 0-5", value="High School"),
+    app_commands.Choice(name="City (Medium) - Level 5-10", value="City"),
+    app_commands.Choice(name="Sewers (Hard) - Level 10-15", value="Sewers"),
+    app_commands.Choice(name="Forest (Hard) - Level 10-15", value="Forest"),
+    app_commands.Choice(name="Abandoned Facility (Extreme) - Level 15-20", value="Abandoned Facility")
+])
 async def explore(interaction: discord.Interaction, area: str):
     conn = connect()
     cursor = conn.cursor()
@@ -208,6 +215,16 @@ async def explore(interaction: discord.Interaction, area: str):
         )
         conn.close()
         return
+
+    # Update character's location
+    cursor.execute("""
+    UPDATE profiles 
+    SET active_location = ?
+    WHERE user_id = ?
+    """, (area, interaction.user.id))
+    conn.commit()
+    
+    await interaction.response.send_message(f"{character[0]} entered {area}.")
     
     # Random encounter
     if random.random() < 0.7:  # 70% chance of encounter
@@ -272,3 +289,37 @@ async def weather(interaction: discord.Interaction):
     await interaction.response.send_message(f"Current weather: {client.current_weather}")
 
 client.run(os.getenv('DISCORD_TOKEN'))
+
+
+
+@client.tree.command(name="leave", description="Leave your current location")
+async def leave(interaction: discord.Interaction):
+    conn = connect()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+    SELECT character_name, active_location FROM profiles
+    WHERE user_id = ?
+    """, (interaction.user.id,))
+    character = cursor.fetchone()
+    
+    if not character:
+        await interaction.response.send_message("You don't have a character!")
+        conn.close()
+        return
+        
+    if not character[1]:
+        await interaction.response.send_message("You're not in any location!")
+        conn.close()
+        return
+    
+    location = character[1]
+    cursor.execute("""
+    UPDATE profiles 
+    SET active_location = NULL
+    WHERE user_id = ?
+    """, (interaction.user.id,))
+    conn.commit()
+    conn.close()
+    
+    await interaction.response.send_message(f"{character[0]} left {location}.")
