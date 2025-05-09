@@ -17,13 +17,18 @@ class Character:
     max_hp: int
     inventory: Dict[str, List[str]]
     coins: int
+    level: int = 0
+    exp: int = 0
+    owner_id: str = ""
 
 @dataclass
 class Area:
     name: str
     enemies: List[str]
     items: List[str]
-    difficulty: int
+    min_level: int
+    max_level: int
+    exp_reward: int
 
 # Initialize bot
 class RPGBot(discord.Client):
@@ -36,9 +41,16 @@ class RPGBot(discord.Client):
         
         # Load game data
         self.areas = {
-            "Forest": Area("Forest", ["Wolf", "Bandit", "Dark Spirit"], ["Health Potion", "Wood Sword", "Leather Armor"], 1),
-            "Cave": Area("Cave", ["Goblin", "Troll", "Dragon"], ["Magic Stone", "Steel Sword", "Iron Shield"], 2),
-            "Castle": Area("Castle", ["Knight", "Wizard", "Dark Lord"], ["Royal Sword", "Magic Staff", "Golden Armor"], 3)
+            "High School": Area("High School", ["Bully", "Delinquent", "Rival Student"], 
+                              ["Training Manual", "School Uniform", "Basic Nen Tools"], 0, 5, 10),
+            "City": Area("City", ["Thug", "Criminal", "Corrupt Officer"], 
+                        ["Street Weapon", "Combat Gear", "City Maps"], 5, 10, 20),
+            "Sewers": Area("Sewers", ["Mutant", "Underground Boss", "Escaped Experiment"], 
+                          ["Toxic Shield", "Sewer Map", "Rare Artifact"], 10, 15, 30),
+            "Forest": Area("Forest", ["Beast", "Dark Hunter", "Ancient Spirit"], 
+                          ["Beast Core", "Spirit Essence", "Forest Relic"], 10, 15, 30),
+            "Abandoned Facility": Area("Abandoned Facility", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
+                                    ["Experimental Gear", "Research Data", "Ultimate Tech"], 15, 20, 50)
         }
         
         self.shop_items = {
@@ -57,16 +69,36 @@ async def on_ready():
 # Commands
 @client.tree.command(name="create_character", description="Create your character")
 async def create_character(interaction: discord.Interaction, name: str, nen_type: str):
-    user_id = str(interaction.user.id)
-    client.characters[user_id] = Character(
+    if name in client.characters:
+        await interaction.response.send_message("A character with this name already exists!")
+        return
+        
+    client.characters[name] = Character(
         name=name,
         nen_type=nen_type,
         hp=100,
         max_hp=100,
         inventory={"items": [], "consumables": []},
-        coins=100
+        coins=100,
+        owner_id=str(interaction.user.id)
     )
     await interaction.response.send_message(f"Character created: {name} ({nen_type})")
+
+@client.tree.command(name="list_characters", description="List all your characters")
+async def list_characters(interaction: discord.Interaction):
+    user_id = str(interaction.user.id)
+    user_characters = [char for char in client.characters.values() if char.owner_id == user_id]
+    
+    if not user_characters:
+        await interaction.response.send_message("You don't have any characters yet!")
+        return
+        
+    embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
+    for char in user_characters:
+        embed.add_field(name=char.name, 
+                       value=f"Level: {char.level}\nNen Type: {char.nen_type}\nHP: {char.hp}/{char.max_hp}",
+                       inline=False)
+    await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="profile", description="Show your character profile")
 async def profile(interaction: discord.Interaction):
@@ -85,10 +117,14 @@ async def profile(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="explore", description="Explore an area")
-async def explore(interaction: discord.Interaction, area: str):
-    user_id = str(interaction.user.id)
-    if user_id not in client.characters:
-        await interaction.response.send_message("Create a character first!")
+async def explore(interaction: discord.Interaction, character_name: str, area: str):
+    if character_name not in client.characters:
+        await interaction.response.send_message("Character not found!")
+        return
+        
+    char = client.characters[character_name]
+    if char.owner_id != str(interaction.user.id):
+        await interaction.response.send_message("This isn't your character!")
         return
     
     if area not in client.areas:
@@ -96,11 +132,29 @@ async def explore(interaction: discord.Interaction, area: str):
         return
     
     selected_area = client.areas[area]
+    
+    if char.level < selected_area.min_level:
+        await interaction.response.send_message(f"Your level is too low! You need to be at least level {selected_area.min_level}")
+        return
+    
+    if char.level > selected_area.max_level:
+        await interaction.response.send_message(f"This area is too easy for you! Try somewhere more challenging (level {selected_area.min_level}-{selected_area.max_level})")
+        return
+    
     # Random encounter
     if random.random() < 0.7:  # 70% chance of encounter
         enemy = random.choice(selected_area.enemies)
         item = random.choice(selected_area.items) if random.random() < 0.5 else None
-        coins = random.randint(10, 50) * selected_area.difficulty
+        coins = random.randint(10, 50)
+        exp_gain = selected_area.exp_reward + random.randint(-5, 5)
+        
+        char.exp += exp_gain
+        # Level up check
+        while char.exp >= (char.level + 1) * 100:  # Simple level up formula
+            char.exp -= (char.level + 1) * 100
+            char.level += 1
+            char.max_hp += 20
+            char.hp = char.max_hp
         
         result = f"You encountered a {enemy}!\n"
         if item:
