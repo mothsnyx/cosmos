@@ -320,7 +320,15 @@ async def weather(interaction: discord.Interaction):
         client.current_weather = random.choice(client.weather)
     await interaction.response.send_message(f"Current weather: {client.current_weather}")
 
-client.run(os.getenv('DISCORD_TOKEN'))
+try:
+    client.run(os.getenv('DISCORD_TOKEN'))
+except KeyboardInterrupt:
+    # Graceful shutdown
+    logger.info("Bot is shutting down...")
+finally:
+    # Cleanup
+    if not client.is_closed():
+        client.close()
 
 
 
