@@ -252,38 +252,44 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     cursor.execute("""
     UPDATE profiles 
     SET active_location = ?
-    WHERE user_id = ?
-    """, (area, interaction.user.id))
+    WHERE user_id = ? AND character_name = ?
+    """, (area, interaction.user.id, character_name))
     conn.commit()
+    conn.close()
     
-    await interaction.response.send_message(f"{character[0]} entered {area}.")
+    await interaction.response.send_message(f"{character_name} entered {area}.")
+
+@client.tree.command(name="leave", description="Leave your current location with a specific character")
+async def leave(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
     
-    # Random encounter
-    if random.random() < 0.7:  # 70% chance of encounter
-        enemy = random.choice(selected_area.enemies)
-        item = random.choice(selected_area.items) if random.random() < 0.5 else None
-        coins = random.randint(10, 50)
-        exp_gain = selected_area.exp_reward + random.randint(-5, 5)
+    cursor.execute("""
+    SELECT character_name, active_location FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+    
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
         
-        char.exp += exp_gain
-        # Level up check
-        while char.exp >= (char.level + 1) * 100:  # Simple level up formula
-            char.exp -= (char.level + 1) * 100
-            char.level += 1
-            char.max_hp += 20
-            char.hp = char.max_hp
+    if not character[1]:
+        await interaction.response.send_message(f"{character_name} is not in any location!")
+        conn.close()
+        return
         
-        result = f"You encountered a {enemy}!\n"
-        if item:
-            client.characters[user_id].inventory["items"].append(item)
-            result += f"You found: {item}\n"
-        
-        client.characters[user_id].coins += coins
-        result += f"You earned {coins} coins!"
-        
-        await interaction.response.send_message(result)
-    else:
-        await interaction.response.send_message("You found nothing interesting...")
+    location = character[1]
+    cursor.execute("""
+    UPDATE profiles 
+    SET active_location = NULL
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    conn.commit()
+    conn.close()
+    
+    await interaction.response.send_message(f"{character_name} left {location}.")
 
 @client.tree.command(name="shop", description="View available items in the shop")
 async def shop(interaction: discord.Interaction):
