@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import List, Dict
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+from database import Database
+
+load_dotenv()
 
 # Data structures
 @dataclass
@@ -35,7 +39,7 @@ class RPGBot(discord.Client):
     def __init__(self):
         super().__init__(intents=discord.Intents.default())
         self.tree = app_commands.CommandTree(self)
-        self.characters = {}
+        self.db = Database()
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
         
@@ -203,4 +207,4 @@ async def weather(interaction: discord.Interaction):
         client.current_weather = random.choice(client.weather)
     await interaction.response.send_message(f"Current weather: {client.current_weather}")
 
-client.run('YOUR_BOT_TOKEN')
+client.run(os.getenv('DISCORD_TOKEN'))
