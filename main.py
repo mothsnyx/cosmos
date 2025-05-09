@@ -3,6 +3,7 @@ import discord
 from discord import app_commands
 import random
 import json
+import logging
 from dataclasses import dataclass
 from typing import List, Dict
 import os
