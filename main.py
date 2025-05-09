@@ -169,7 +169,7 @@ async def profile(interaction: discord.Interaction):
     embed.add_field(name="Consumables", value=", ".join(char.inventory["consumables"]) or "None")
     await interaction.response.send_message(embed=embed)
 
-@client.tree.command(name="explore", description="Explore an area")
+@client.tree.command(name="explore", description="Explore an area with a specific character")
 @app_commands.choices(area=[
     app_commands.Choice(name="High School (Easy) - Level 0-5", value="High School"),
     app_commands.Choice(name="City (Medium) - Level 5-10", value="City"),
@@ -177,15 +177,15 @@ async def profile(interaction: discord.Interaction):
     app_commands.Choice(name="Forest (Hard) - Level 10-15", value="Forest"),
     app_commands.Choice(name="Abandoned Facility (Extreme) - Level 15-20", value="Abandoned Facility")
 ])
-async def explore(interaction: discord.Interaction, area: str):
+async def explore(interaction: discord.Interaction, character_name: str, area: str):
     conn = connect()
     cursor = conn.cursor()
     
     # Get character info
     cursor.execute("""
     SELECT character_name, level FROM profiles
-    WHERE user_id = ?
-    """, (interaction.user.id,))
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
     character = cursor.fetchone()
     
     if not character:
@@ -292,15 +292,15 @@ client.run(os.getenv('DISCORD_TOKEN'))
 
 
 
-@client.tree.command(name="leave", description="Leave your current location")
-async def leave(interaction: discord.Interaction):
+@client.tree.command(name="leave", description="Leave your current location with a specific character")
+async def leave(interaction: discord.Interaction, character_name: str):
     conn = connect()
     cursor = conn.cursor()
     
     cursor.execute("""
     SELECT character_name, active_location FROM profiles
-    WHERE user_id = ?
-    """, (interaction.user.id,))
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
     character = cursor.fetchone()
     
     if not character:
