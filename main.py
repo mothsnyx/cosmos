@@ -14,6 +14,10 @@ from dotenv import load_dotenv
 load_dotenv()
 setup_database()  # Initialize database tables
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Data structures
 @dataclass
 class Character:
