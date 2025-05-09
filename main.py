@@ -52,17 +52,17 @@ class RPGBot(discord.Client):
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
         
-        # Load game data
+        # Load game data with difficulty levels
         self.areas = {
-            "High School": Area("High School", ["Bully", "Delinquent", "Rival Student"], 
+            "High School": Area("High School (Easy)", ["Bully", "Delinquent", "Rival Student"], 
                               ["Training Manual", "School Uniform", "Basic Nen Tools"], 0, 5, 10),
-            "City": Area("City", ["Thug", "Criminal", "Corrupt Officer"], 
+            "City": Area("City (Medium)", ["Thug", "Criminal", "Corrupt Officer"], 
                         ["Street Weapon", "Combat Gear", "City Maps"], 5, 10, 20),
-            "Sewers": Area("Sewers", ["Mutant", "Underground Boss", "Escaped Experiment"], 
+            "Sewers": Area("Sewers (Hard)", ["Mutant", "Underground Boss", "Escaped Experiment"], 
                           ["Toxic Shield", "Sewer Map", "Rare Artifact"], 10, 15, 30),
-            "Forest": Area("Forest", ["Beast", "Dark Hunter", "Ancient Spirit"], 
+            "Forest": Area("Forest (Hard)", ["Beast", "Dark Hunter", "Ancient Spirit"], 
                           ["Beast Core", "Spirit Essence", "Forest Relic"], 10, 15, 30),
-            "Abandoned Facility": Area("Abandoned Facility", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
+            "Abandoned Facility": Area("Abandoned Facility (Extreme)", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
                                     ["Experimental Gear", "Research Data", "Ultimate Tech"], 15, 20, 50)
         }
         
@@ -170,28 +170,43 @@ async def profile(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="explore", description="Explore an area")
-async def explore(interaction: discord.Interaction, character_name: str, area: str):
-    if character_name not in client.characters:
-        await interaction.response.send_message("Character not found!")
-        return
-        
-    char = client.characters[character_name]
-    if char.owner_id != str(interaction.user.id):
-        await interaction.response.send_message("This isn't your character!")
+async def explore(interaction: discord.Interaction, area: str):
+    conn = connect()
+    cursor = conn.cursor()
+    
+    # Get character info
+    cursor.execute("""
+    SELECT character_name, level FROM profiles
+    WHERE user_id = ?
+    """, (interaction.user.id,))
+    character = cursor.fetchone()
+    
+    if not character:
+        await interaction.response.send_message("You don't have a character! Create one first with /create_character")
+        conn.close()
         return
     
     if area not in client.areas:
-        await interaction.response.send_message("Invalid area!")
+        available_areas = ", ".join(client.areas.keys())
+        await interaction.response.send_message(f"Invalid area! Available areas: {available_areas}")
+        conn.close()
         return
     
     selected_area = client.areas[area]
+    char_level = character[1]
     
-    if char.level < selected_area.min_level:
-        await interaction.response.send_message(f"Your level is too low! You need to be at least level {selected_area.min_level}")
+    if char_level < selected_area.min_level:
+        await interaction.response.send_message(
+            f"Your level ({char_level}) is too low for {area}! You need to be level {selected_area.min_level}-{selected_area.max_level}."
+        )
+        conn.close()
         return
     
-    if char.level > selected_area.max_level:
-        await interaction.response.send_message(f"This area is too easy for you! Try somewhere more challenging (level {selected_area.min_level}-{selected_area.max_level})")
+    if char_level > selected_area.max_level:
+        await interaction.response.send_message(
+            f"Your level ({char_level}) is too high for {area}! This area is for levels {selected_area.min_level}-{selected_area.max_level}."
+        )
+        conn.close()
         return
     
     # Random encounter
