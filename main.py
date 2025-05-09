@@ -216,6 +216,38 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
         conn.close()
         return
 
+    @client.tree.command(name="leave", description="Leave your current location with a specific character")
+    async def leave(interaction: discord.Interaction, character_name: str):
+        conn = connect()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT character_name, active_location FROM profiles
+        WHERE user_id = ? AND character_name = ?
+        """, (interaction.user.id, character_name))
+        character = cursor.fetchone()
+
+        if not character:
+            await interaction.response.send_message("You don't have a character!")
+            conn.close()
+            return
+
+        if not character[1]:
+            await interaction.response.send_message("You're not in any location!")
+            conn.close()
+            return
+
+        location = character[1]
+        cursor.execute("""
+        UPDATE profiles 
+        SET active_location = NULL
+        WHERE user_id = ?
+        """, (interaction.user.id,))
+        conn.commit()
+        conn.close()
+
+        await interaction.response.send_message(f"{character[0]} left {location}.")
+
     # Update character's location
     cursor.execute("""
     UPDATE profiles 
@@ -292,34 +324,4 @@ client.run(os.getenv('DISCORD_TOKEN'))
 
 
 
-@client.tree.command(name="leave", description="Leave your current location with a specific character")
-async def leave(interaction: discord.Interaction, character_name: str):
-    conn = connect()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-    SELECT character_name, active_location FROM profiles
-    WHERE user_id = ? AND character_name = ?
-    """, (interaction.user.id, character_name))
-    character = cursor.fetchone()
-    
-    if not character:
-        await interaction.response.send_message("You don't have a character!")
-        conn.close()
-        return
-        
-    if not character[1]:
-        await interaction.response.send_message("You're not in any location!")
-        conn.close()
-        return
-    
-    location = character[1]
-    cursor.execute("""
-    UPDATE profiles 
-    SET active_location = NULL
-    WHERE user_id = ?
-    """, (interaction.user.id,))
-    conn.commit()
-    conn.close()
-    
-    await interaction.response.send_message(f"{character[0]} left {location}.")
+
