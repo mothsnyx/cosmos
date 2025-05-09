@@ -8,9 +8,11 @@ from typing import List, Dict
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from database import Database
+from database import setup_database, connect
+from dotenv import load_dotenv
 
 load_dotenv()
+setup_database()  # Initialize database tables
 
 # Data structures
 @dataclass
@@ -37,9 +39,10 @@ class Area:
 # Initialize bot
 class RPGBot(discord.Client):
     def __init__(self):
-        super().__init__(intents=discord.Intents.default())
+        intents = discord.Intents.default()
+        intents.message_content = True
+        super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
-        self.db = Database()
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
         
