@@ -102,6 +102,34 @@ async def create_character(interaction: discord.Interaction, name: str, nen_type
     
     await interaction.response.send_message(f"Character created: {name} ({nen_type})")
 
+@client.tree.command(name="delete_character", description="Delete one of your characters")
+async def delete_character(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+    
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles 
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+    
+    if not character:
+        await interaction.response.send_message("Character not found or doesn't belong to you!")
+        conn.close()
+        return
+    
+    # Delete character's inventory
+    cursor.execute("DELETE FROM inventory WHERE character_id = ?", (character[0],))
+    
+    # Delete character profile
+    cursor.execute("DELETE FROM profiles WHERE character_id = ?", (character[0],))
+    
+    conn.commit()
+    conn.close()
+    
+    await interaction.response.send_message(f"Character '{character_name}' has been deleted.")
+
 @client.tree.command(name="list_characters", description="List all your characters")
 async def list_characters(interaction: discord.Interaction):
     conn = connect()
