@@ -377,7 +377,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
     else:
         await interaction.response.send_message(f"{character_name} found nothing of value...")
 
-conn.close()
+    conn.close()
 
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
