@@ -342,16 +342,21 @@ async def loot(interaction: discord.Interaction, character_name: str):
             conn.close()
             return
 
-    # Get random loot from current location
-    cursor.execute("""
-    SELECT name, description, value, hp_effect FROM loot_items
-    WHERE location = ?
-    ORDER BY RANDOM() LIMIT 1
-    """, (current_location,))
-    loot = cursor.fetchone()
+    # 70% chance to find loot
+    if random.random() < 0.7:
+        cursor.execute("""
+        SELECT name, description, value, hp_effect FROM loot_items
+        WHERE location = ?
+        ORDER BY RANDOM() LIMIT 1
+        """, (current_location,))
+        loot = cursor.fetchone()
 
-    if not loot:
-        await interaction.response.send_message("Found nothing of value...")
+        if not loot:
+            await interaction.response.send_message(f"{character_name} found nothing of value...")
+            conn.close()
+            return
+    else:
+        await interaction.response.send_message(f"{character_name} found nothing of value...")
         conn.close()
         return
 
