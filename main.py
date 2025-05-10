@@ -448,109 +448,124 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
     DELETE FROM inventory
     WHERE id = ?
     """, (item[0],))
-    
+
     conn.commit()
     conn.close()
 
     await interaction.response.send_message(f"Removed {item_name} from {character_name}'s inventory.")
 
-current_encounter_result = None
-failed_attempts = 0
+# Encounter system variables
+active_encounters = {}
 
 class EncounterView(discord.ui.View):
-    def __init__(self, encounter_result):
+    def __init__(self, character_name: str, enemy_name: str, enemy_description: str):
         super().__init__()
-        self.encounter_result = encounter_result
+        self.character_name = character_name
+        self.enemy_name = enemy_name
+        self.enemy_description = enemy_description
 
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("You fled safely.")
-        global current_encounter_result
-        global failed_attempts
-        current_encounter_result = None
-        failed_attempts = 0
+        if self.character_name in active_encounters:
+            del active_encounters[self.character_name]
+        await interaction.response.send_message(f"{self.character_name} fled safely from the {self.enemy_name}.")
         self.stop()
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"You chose to fight the **{self.encounter_result}**! \nUse the command `!fight` to roll a die.")
-        global current_encounter_result
-        current_encounter_result = self.encounter_result
+        active_encounters[self.character_name] = {'enemy': self.enemy_name, 'failed_attempts': 0}
+        await interaction.response.send_message(
+            f"{self.character_name} chose to fight the {self.enemy_name}!\nUse /fight to roll a die."
+        )
         self.stop()
 
-class SecondEncounterView(discord.ui.View):
-    def __init__(self, encounter_result):
-        super().__init__()
-        self.encounter_result = encounter_result
+@client.tree.command(name="encounter", description="Start a random enemy encounter")
+async def encounter(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
 
-    @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
-    async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("You managed to flee, but suffered injuries in the process.")
-        global current_encounter_result
-        global failed_attempts
-        current_encounter_result = None
-        failed_attempts = 0
-        self.stop()
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT active_location FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
 
-    @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
-    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(f"You chose to continue fighting the **{self.encounter_result}**! \nUse the command `!fight` to roll a die.")
-        global current_encounter_result
-        current_encounter_result = self.encounter_result
-        self.stop()
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
 
-@bot.command(name="encounter")
-async def encounter(ctx):
-    """Simulates a Beast Encounter and returns the result."""
-    encounter_result = random.choice(ENCOUNTERS)
-    if encounter_result == "nothing":
-        await ctx.send("You encountered nothing.")
+    if not character[0]:
+        await interaction.response.send_message(f"{character_name} is not in any location!")
+        conn.close()
+        return
+
+    # Get random enemy from current location
+    cursor.execute("""
+    SELECT name, description FROM enemies
+    WHERE location = ?
+    ORDER BY RANDOM() LIMIT 1
+    """, (character[0],))
+    enemy = cursor.fetchone()
+    conn.close()
+
+    if not enemy:
+        await interaction.response.send_message("No enemies found in this area.")
+        return
+
+    embed = discord.Embed(
+        title="Enemy Encounter", 
+        description=f"{character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
+        color=discord.Color.red()
+    )
+    view = EncounterView(character_name, enemy[0], enemy[1])
+    await interaction.response.send_message(embed=embed, view=view)
+
+@client.tree.command(name="fight", description="Roll a die to fight the current enemy")
+async def fight(interaction: discord.Interaction, character_name: str):
+    if character_name not in active_encounters:
+        await interaction.response.send_message(
+            f"No active encounter for {character_name}.\nUse /encounter to start one."
+        )
+        return
+
+    encounter_data = active_encounters[character_name]
+    enemy_name = encounter_data['enemy']
+
+    # Roll dice
+    player_roll = random.randint(1, 20)
+    enemy_roll = random.randint(1, 20)
+
+    embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
+    embed.add_field(name=f"{character_name}'s Roll", value=str(player_roll), inline=True)
+    embed.add_field(name=f"{enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+
+    if player_roll == enemy_roll:
+        del active_encounters[character_name]
+        embed.description = f"The {enemy_name} changed its mind and fled!"
+    elif player_roll > enemy_roll:
+        del active_encounters[character_name]
+        embed.description = f"🏆 Victory! {character_name} defeated the {enemy_name}!"
     else:
-        embed = discord.Embed(title="Beast Encounter", description=f"You encountered a **{encounter_result}**!", color=0x7d2122)
-        view = EncounterView(encounter_result)
-        await ctx.send(embed=embed, view=view)
-
-@bot.command(name="fight")
-async def fight(ctx, dice: str = "1d20"):
-    """Rolls a dice in NdN format."""
-    global current_encounter_result
-    global failed_attempts
-    if not current_encounter_result:
-        await ctx.send('There is no active encounter. \nUse the `!encounter` command to start an encounter.')
-        return
-
-    try:
-        rolls, limit = map(int, dice.split('d'))
-    except Exception:
-        await ctx.send('Format has to be in NdN!')
-        return
-
-    result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
-    total = sum(int(num) for num in result.split(', '))
-    await ctx.send(f'You rolled **{result}** ')
-
-    if rolls == 1 and limit == 20:
-        roll_value = total
-        beast_roll_value = random.randint(1, 20)
-        survival_threshold = random.randint(10, 20)  # Random threshold to beat
-
-        if roll_value == beast_roll_value:
-            await ctx.send(f"The Enemy rolled **{beast_roll_value}** as well.\n\n**The {current_encounter_result} changed its mind and fled!**")
-            current_encounter_result = None  # Reset encounter result
-            failed_attempts = 0
-        elif roll_value > survival_threshold:
-            await ctx.send(f"The Enemy rolled **{survival_threshold}** \n\n🏆 ┃ **You defeated the {current_encounter_result}!** \n-# You can scavenge once more today. ")
-            current_encounter_result = None  # Reset encounter result
-            failed_attempts = 0
+        encounter_data['failed_attempts'] += 1
+        if encounter_data['failed_attempts'] >= 2:
+            del active_encounters[character_name]
+            embed.description = f"🪦 {character_name} was defeated by the {enemy_name}!"
         else:
-            failed_attempts += 1
-            if failed_attempts == 1:
-                await ctx.send(f"The Enemy rolled **{survival_threshold}**")
-                embed = discord.Embed(title="Beast Encounter", description=f"You've been injured! Do you want to **fight** on or **flee**?\n *Continuing to fight may lead to your muse’s death*.", color=0x7d2122)
-                view = SecondEncounterView(current_encounter_result)
-                await ctx.send(embed=embed, view=view)
-            elif failed_attempts >= 2:
-                await ctx.send(f"The Enemy rolled **{survival_threshold}** \n\n🪦 ┃ **Your muse got killed by the {current_encounter_result}**.")
-                current_encounter_result = None  # Reset encounter result
-                failed_attempts = 0
+            embed.description = f"{character_name} was injured! Use /fight to continue or /flee to retreat."
 
+    await interaction.response.send_message(embed=embed)
+
+@client.tree.command(name="flee", description="Attempt to flee from the current enemy")
+async def flee(interaction: discord.Interaction, character_name: str):
+    if character_name not in active_encounters:
+        await interaction.response.send_message(
+            f"No active encounter for {character_name}."
+        )
+        return
+
+    del active_encounters[character_name]
+    await interaction.response.send_message(
+        f"{character_name} managed to flee, but suffered injuries in the process."
+    )
