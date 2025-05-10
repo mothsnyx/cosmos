@@ -764,62 +764,6 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
 
-@client.tree.command(name="use_item", description="Use a healing item from your inventory")
-async def use_item(interaction: discord.Interaction, character_name: str, item_name: str):
-    conn = connect()
-    cursor = conn.cursor()
-
-    # Check if character exists and belongs to user
-    cursor.execute("""
-    SELECT character_id, hp FROM profiles
-    WHERE user_id = ? AND character_name = ?
-    """, (interaction.user.id, character_name))
-    character = cursor.fetchone()
-
-    if not character:
-        await interaction.response.send_message("Character not found!")
-        conn.close()
-        return
-
-    character_id, current_hp = character
-
-    # Get the first matching item with hp_effect > 0
-    cursor.execute("""
-    SELECT id, item_name, hp_effect FROM inventory
-    WHERE character_id = ? AND item_name = ? AND hp_effect > 0
-    LIMIT 1
-    """, (character_id, item_name))
-    item = cursor.fetchone()
-
-    if not item:
-        await interaction.response.send_message(f"No healing item named '{item_name}' found in inventory!")
-        conn.close()
-        return
-
-    item_id, item_name, hp_effect = item
-    new_hp = min(100, current_hp + hp_effect)  # Cap HP at 100
-
-    # Update character's HP
-    cursor.execute("""
-    UPDATE profiles
-    SET hp = ?
-    WHERE character_id = ?
-    """, (new_hp, character_id))
-
-    # Remove the used item
-    cursor.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
-
-    conn.commit()
-    conn.close()
-
-    embed = discord.Embed(title="Item Used", color=discord.Color.green())
-    embed.add_field(name="Item", value=item_name)
-    embed.add_field(name="Healing", value=f"+{hp_effect} HP")
-    embed.add_field(name="New HP", value=f"{new_hp}/100", inline=False)
-
-    await interaction.response.send_message(embed=embed)
-
-
     if not character:
         await interaction.response.send_message("Character not found!")
         conn.close()
