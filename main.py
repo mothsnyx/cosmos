@@ -240,14 +240,7 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
 
     if char_level < selected_area.min_level:
         await interaction.response.send_message(
-            f"Your level ({char_level}) is too low for {area}! You need to be level {selected_area.min_level}-{selected_area.max_level}."
-        )
-        conn.close()
-        return
-
-    if char_level > selected_area.max_level:
-        await interaction.response.send_message(
-            f"Your level ({char_level}) is too high for {area}! This area is for levels {selected_area.min_level}-{selected_area.max_level}."
+            f"Your level ({char_level}) is too low for {area}! You need to be at least level {selected_area.min_level}."
         )
         conn.close()
         return
