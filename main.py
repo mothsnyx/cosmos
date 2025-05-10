@@ -454,3 +454,103 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
 
     await interaction.response.send_message(f"Removed {item_name} from {character_name}'s inventory.")
 
+current_encounter_result = None
+failed_attempts = 0
+
+class EncounterView(discord.ui.View):
+    def __init__(self, encounter_result):
+        super().__init__()
+        self.encounter_result = encounter_result
+
+    @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
+    async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("You fled safely.")
+        global current_encounter_result
+        global failed_attempts
+        current_encounter_result = None
+        failed_attempts = 0
+        self.stop()
+
+    @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
+    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(f"You chose to fight the **{self.encounter_result}**! \nUse the command `!fight` to roll a die.")
+        global current_encounter_result
+        current_encounter_result = self.encounter_result
+        self.stop()
+
+class SecondEncounterView(discord.ui.View):
+    def __init__(self, encounter_result):
+        super().__init__()
+        self.encounter_result = encounter_result
+
+    @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
+    async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("You managed to flee, but suffered injuries in the process.")
+        global current_encounter_result
+        global failed_attempts
+        current_encounter_result = None
+        failed_attempts = 0
+        self.stop()
+
+    @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
+    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(f"You chose to continue fighting the **{self.encounter_result}**! \nUse the command `!fight` to roll a die.")
+        global current_encounter_result
+        current_encounter_result = self.encounter_result
+        self.stop()
+
+@bot.command(name="encounter")
+async def encounter(ctx):
+    """Simulates a Beast Encounter and returns the result."""
+    encounter_result = random.choice(ENCOUNTERS)
+    if encounter_result == "nothing":
+        await ctx.send("You encountered nothing.")
+    else:
+        embed = discord.Embed(title="Beast Encounter", description=f"You encountered a **{encounter_result}**!", color=0x7d2122)
+        view = EncounterView(encounter_result)
+        await ctx.send(embed=embed, view=view)
+
+@bot.command(name="fight")
+async def fight(ctx, dice: str = "1d20"):
+    """Rolls a dice in NdN format."""
+    global current_encounter_result
+    global failed_attempts
+    if not current_encounter_result:
+        await ctx.send('There is no active encounter. \nUse the `!encounter` command to start an encounter.')
+        return
+
+    try:
+        rolls, limit = map(int, dice.split('d'))
+    except Exception:
+        await ctx.send('Format has to be in NdN!')
+        return
+
+    result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
+    total = sum(int(num) for num in result.split(', '))
+    await ctx.send(f'You rolled **{result}** ')
+
+    if rolls == 1 and limit == 20:
+        roll_value = total
+        beast_roll_value = random.randint(1, 20)
+        survival_threshold = random.randint(10, 20)  # Random threshold to beat
+
+        if roll_value == beast_roll_value:
+            await ctx.send(f"The Enemy rolled **{beast_roll_value}** as well.\n\n**The {current_encounter_result} changed its mind and fled!**")
+            current_encounter_result = None  # Reset encounter result
+            failed_attempts = 0
+        elif roll_value > survival_threshold:
+            await ctx.send(f"The Enemy rolled **{survival_threshold}** \n\n🏆 ┃ **You defeated the {current_encounter_result}!** \n-# You can scavenge once more today. ")
+            current_encounter_result = None  # Reset encounter result
+            failed_attempts = 0
+        else:
+            failed_attempts += 1
+            if failed_attempts == 1:
+                await ctx.send(f"The Enemy rolled **{survival_threshold}**")
+                embed = discord.Embed(title="Beast Encounter", description=f"You've been injured! Do you want to **fight** on or **flee**?\n *Continuing to fight may lead to your muse’s death*.", color=0x7d2122)
+                view = SecondEncounterView(current_encounter_result)
+                await ctx.send(embed=embed, view=view)
+            elif failed_attempts >= 2:
+                await ctx.send(f"The Enemy rolled **{survival_threshold}** \n\n🪦 ┃ **Your muse got killed by the {current_encounter_result}**.")
+                current_encounter_result = None  # Reset encounter result
+                failed_attempts = 0
+
