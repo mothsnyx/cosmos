@@ -420,11 +420,11 @@ class EncounterView(discord.ui.View):
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
         damage_multipliers = {
-            "High School": 5,
-            "City": 10,
-            "Sewers": 15,
-            "Forest": 15,
-            "Abandoned Facility": 20
+            "High School": 10,
+            "City": 20,
+            "Sewers": 35,
+            "Forest": 30,
+            "Abandoned Facility": 40
         }
         base_damage = damage_multipliers.get(location, 5)
         if is_second_roll:
