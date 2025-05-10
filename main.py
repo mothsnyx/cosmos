@@ -340,6 +340,76 @@ async def buy(interaction: discord.Interaction, item: str):
     char.inventory["consumables"].append(item)
     await interaction.response.send_message(f"Bought {item} for {price} coins!")
 
+@client.tree.command(name="loot", description="Search for loot in your current area")
+async def loot(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+    
+    # Get character location and info
+    cursor.execute("""
+    SELECT active_location FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+    
+    if not character or not character[0]:
+        await interaction.response.send_message(f"{character_name} is not in any location!")
+        conn.close()
+        return
+        
+    current_location = character[0]
+    
+    # Random chance (20%) to encounter enemy
+    if random.random() < 0.2:
+        cursor.execute("""
+        SELECT name, description FROM enemies
+        WHERE location = ?
+        ORDER BY RANDOM() LIMIT 1
+        """, (current_location,))
+        enemy = cursor.fetchone()
+        
+        if enemy:
+            await interaction.response.send_message(
+                f"⚔️ While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}\n(Combat system coming soon™)"
+            )
+            conn.close()
+            return
+    
+    # Get random loot from current location
+    cursor.execute("""
+    SELECT name, description, value, hp_effect FROM loot_items
+    WHERE location = ?
+    ORDER BY RANDOM() LIMIT 1
+    """, (current_location,))
+    loot = cursor.fetchone()
+    
+    if not loot:
+        await interaction.response.send_message("Found nothing of value...")
+        conn.close()
+        return
+        
+    # Add item to inventory
+    cursor.execute("""
+    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+    SELECT character_id, ?, ?, ?, ?
+    FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
+    
+    conn.commit()
+    conn.close()
+    
+    embed = discord.Embed(
+        title="🎁 Loot Found!",
+        description=f"{character_name} found: {loot[0]}\n{loot[1]}",
+        color=discord.Color.gold()
+    )
+    embed.add_field(name="Value", value=f"{loot[2]} GP")
+    if loot[3] != 0:
+        embed.add_field(name="HP Effect", value=str(loot[3]))
+    
+    await interaction.response.send_message(embed=embed)
+
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
     if random.random() < 0.3:  # 30% chance to change weather
