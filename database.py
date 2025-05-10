@@ -15,7 +15,6 @@ def setup_database():
         character_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         character_name TEXT,
-        nen_type TEXT,
         hp INTEGER,
         level INTEGER DEFAULT 0,
         weapon TEXT,

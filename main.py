@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Character:
     name: str
-    nen_type: str
     hp: int
     max_hp: int
     inventory: Dict[str, List[str]]
@@ -80,7 +79,7 @@ async def on_ready():
 
 # Commands
 @client.tree.command(name="create_character", description="Create your character")
-async def create_character(interaction: discord.Interaction, name: str, nen_type: str):
+async def create_character(interaction: discord.Interaction, name: str):
     conn = connect()
     cursor = conn.cursor()
 
@@ -93,9 +92,9 @@ async def create_character(interaction: discord.Interaction, name: str, nen_type
 
     # Create character
     cursor.execute("""
-    INSERT INTO profiles (user_id, character_name, nen_type, hp, level)
-    VALUES (?, ?, ?, ?, ?)
-    """, (interaction.user.id, name, nen_type, 100, 0))
+    INSERT INTO profiles (user_id, character_name, hp, level)
+    VALUES (?, ?, ?, ?)
+    """, (interaction.user.id, name, 100, 0))
     conn.commit()
     conn.close()
 
@@ -135,7 +134,7 @@ async def list_characters(interaction: discord.Interaction):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT character_name, nen_type, hp, level FROM profiles
+    SELECT character_name, hp, level FROM profiles
     WHERE user_id = ?
     """, (interaction.user.id,))
     characters = cursor.fetchall()
@@ -148,7 +147,7 @@ async def list_characters(interaction: discord.Interaction):
     embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
     for char in characters:
         embed.add_field(name=char[0], 
-                       value=f"Level: {char[3]}\nNen Type: {char[1]}\nHP: {char[2]}/100",
+                       value=f"Level: {char[2]}\nHP: {char[1]}/100",
                        inline=False)
     await interaction.response.send_message(embed=embed)
 
