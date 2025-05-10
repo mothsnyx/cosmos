@@ -633,8 +633,8 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
 
     await interaction.response.send_message(f"Removed {item_name} from {character_name}'s inventory.")
 
-@client.tree.command(name="use_item", description="Use a healing item from your inventory")
-async def use_item(interaction: discord.Interaction, character_name: str, item_name: str):
+@client.tree.command(name="heal", description="Use a healing item from your inventory")
+async def heal(interaction: discord.Interaction, character_name: str, item_name: str):
     conn = connect()
     cursor = conn.cursor()
 
