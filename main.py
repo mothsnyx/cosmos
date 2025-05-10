@@ -588,16 +588,6 @@ async def weather(interaction: discord.Interaction):
         client.current_weather = random.choice(client.weather)
     await interaction.response.send_message(f"Current weather: {client.current_weather}")
 
-try:
-    client.run(os.getenv('DISCORD_TOKEN'))
-except KeyboardInterrupt:
-    # Graceful shutdown
-    logger.info("Bot is shutting down...")
-finally:
-    # Cleanup
-    if not client.is_closed():
-        client.close()
-
 @client.tree.command(name="remove_item", description="Remove an item from your character's inventory")
 async def remove_item(interaction: discord.Interaction, character_name: str, item_name: str):
     conn = connect()
@@ -862,3 +852,13 @@ async def flee(interaction: discord.Interaction, character_name: str):
     await interaction.response.send_message(
         f"{character_name} managed to flee, but suffered injuries in the process."
     )
+
+try:
+    client.run(os.getenv('DISCORD_TOKEN'))
+except KeyboardInterrupt:
+    # Graceful shutdown
+    logger.info("Bot is shutting down...")
+finally:
+    # Cleanup
+    if not client.is_closed():
+        client.close()
