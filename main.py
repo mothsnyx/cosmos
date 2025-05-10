@@ -98,7 +98,7 @@ async def create_character(interaction: discord.Interaction, name: str):
     conn.commit()
     conn.close()
 
-    await interaction.response.send_message(f"Character created: {name} ({nen_type})")
+    await interaction.response.send_message(f"Character created: {name} ")
 
 @client.tree.command(name="delete_character", description="Delete one of your characters")
 async def delete_character(interaction: discord.Interaction, character_name: str):
