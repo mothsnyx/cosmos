@@ -1,4 +1,3 @@
-
 import discord
 from discord import app_commands
 import random
@@ -51,7 +50,7 @@ class RPGBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
-        
+
         # Load game data with difficulty levels
         self.areas = {
             "High School": Area("High School (Easy)", ["Bully", "Delinquent", "Rival Student"], 
@@ -65,7 +64,7 @@ class RPGBot(discord.Client):
             "Abandoned Facility": Area("Abandoned Facility (Extreme)", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
                                     ["Experimental Gear", "Research Data", "Ultimate Tech"], 15, 20, 50)
         }
-        
+
         self.shop_items = {
             "Health Potion": 50,
             "Strength Potion": 75,
@@ -84,14 +83,14 @@ async def on_ready():
 async def create_character(interaction: discord.Interaction, name: str, nen_type: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     # Check if character exists
     cursor.execute("SELECT character_name FROM profiles WHERE character_name = ?", (name,))
     if cursor.fetchone():
         await interaction.response.send_message("A character with this name already exists!")
         conn.close()
         return
-    
+
     # Create character
     cursor.execute("""
     INSERT INTO profiles (user_id, character_name, nen_type, hp, level)
@@ -99,53 +98,53 @@ async def create_character(interaction: discord.Interaction, name: str, nen_type
     """, (interaction.user.id, name, nen_type, 100, 0))
     conn.commit()
     conn.close()
-    
+
     await interaction.response.send_message(f"Character created: {name} ({nen_type})")
 
 @client.tree.command(name="delete_character", description="Delete one of your characters")
 async def delete_character(interaction: discord.Interaction, character_name: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     # Check if character exists and belongs to user
     cursor.execute("""
     SELECT character_id FROM profiles 
     WHERE user_id = ? AND character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
-    
+
     if not character:
         await interaction.response.send_message("Character not found or doesn't belong to you!")
         conn.close()
         return
-    
+
     # Delete character's inventory
     cursor.execute("DELETE FROM inventory WHERE character_id = ?", (character[0],))
-    
+
     # Delete character profile
     cursor.execute("DELETE FROM profiles WHERE character_id = ?", (character[0],))
-    
+
     conn.commit()
     conn.close()
-    
+
     await interaction.response.send_message(f"Character '{character_name}' has been deleted.")
 
 @client.tree.command(name="list_characters", description="List all your characters")
 async def list_characters(interaction: discord.Interaction):
     conn = connect()
     cursor = conn.cursor()
-    
+
     cursor.execute("""
     SELECT character_name, nen_type, hp, level FROM profiles
     WHERE user_id = ?
     """, (interaction.user.id,))
     characters = cursor.fetchall()
     conn.close()
-    
+
     if not characters:
         await interaction.response.send_message("You don't have any characters yet!")
         return
-        
+
     embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
     for char in characters:
         embed.add_field(name=char[0], 
@@ -157,25 +156,25 @@ async def list_characters(interaction: discord.Interaction):
 async def profile(interaction: discord.Interaction, character_name: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     cursor.execute("""
     SELECT character_name, nen_type, hp, level, active_location 
     FROM profiles
     WHERE user_id = ? AND character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
-    
+
     if not character:
         await interaction.response.send_message("Character not found! Use /create_character to make one.")
         conn.close()
         return
-    
+
     embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
     embed.add_field(name="Nen Type", value=character[1])
     embed.add_field(name="HP", value=f"{character[2]}/100")
     embed.add_field(name="Level", value=str(character[3]))
     embed.add_field(name="Location", value=character[4] or "Not in any location")
-    
+
     await interaction.response.send_message(embed=embed)
     conn.close()
 
@@ -190,28 +189,28 @@ async def profile(interaction: discord.Interaction, character_name: str):
 async def explore(interaction: discord.Interaction, character_name: str, area: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     # Get character info
     cursor.execute("""
     SELECT character_name, level FROM profiles
     WHERE user_id = ? AND character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
-    
+
     if not character:
         await interaction.response.send_message("You don't have a character! Create one first with /create_character")
         conn.close()
         return
-    
+
     if area not in client.areas:
         available_areas = ", ".join(client.areas.keys())
         await interaction.response.send_message(f"Invalid area! Available areas: {available_areas}")
         conn.close()
         return
-    
+
     selected_area = client.areas[area]
     char_level = character[1]
-    
+
     # Location descriptions
     location_descriptions = {
         "High School": "A normal-looking High School with noisy classrooms, messy lockers and weird rumors in the halls. It's eerily silent at night.",
@@ -220,52 +219,20 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
         "Forest": "A thick forest just outside town. It's quiet, too quiet. You always feel like something's watching.",
         "Abandoned Facility": "An old lab that's falling apart. It's locked up, full of weird tech... and maybe something still inside."
     }
-    
+
     if char_level < selected_area.min_level:
         await interaction.response.send_message(
             f"Your level ({char_level}) is too low for {area}! You need to be level {selected_area.min_level}-{selected_area.max_level}."
         )
         conn.close()
         return
-    
+
     if char_level > selected_area.max_level:
         await interaction.response.send_message(
             f"Your level ({char_level}) is too high for {area}! This area is for levels {selected_area.min_level}-{selected_area.max_level}."
         )
         conn.close()
         return
-
-    @client.tree.command(name="leave", description="Leave your current location with a specific character")
-    async def leave(interaction: discord.Interaction, character_name: str):
-        conn = connect()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-        SELECT character_name, active_location FROM profiles
-        WHERE user_id = ? AND character_name = ?
-        """, (interaction.user.id, character_name))
-        character = cursor.fetchone()
-
-        if not character:
-            await interaction.response.send_message("You don't have a character!")
-            conn.close()
-            return
-
-        if not character[1]:
-            await interaction.response.send_message("You're not in any location!")
-            conn.close()
-            return
-
-        location = character[1]
-        cursor.execute("""
-        UPDATE profiles 
-        SET active_location = NULL
-        WHERE user_id = ?
-        """, (interaction.user.id,))
-        conn.commit()
-        conn.close()
-
-        await interaction.response.send_message(f"{character[0]} left {location}.")
 
     # Update character's location
     cursor.execute("""
@@ -275,7 +242,7 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     """, (area, interaction.user.id, character_name))
     conn.commit()
     conn.close()
-    
+
     embed = discord.Embed(title=f"{character_name} entered {area}", description=location_descriptions[area], color=discord.Color.blue())
     await interaction.response.send_message(embed=embed)
 
@@ -283,23 +250,23 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
 async def leave(interaction: discord.Interaction, character_name: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     cursor.execute("""
     SELECT character_name, active_location FROM profiles
     WHERE user_id = ? AND character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
-    
+
     if not character:
         await interaction.response.send_message("Character not found!")
         conn.close()
         return
-        
+
     if not character[1]:
         await interaction.response.send_message(f"{character_name} is not in any location!")
         conn.close()
         return
-        
+
     location = character[1]
     cursor.execute("""
     UPDATE profiles 
@@ -308,7 +275,7 @@ async def leave(interaction: discord.Interaction, character_name: str):
     """, (interaction.user.id, character_name))
     conn.commit()
     conn.close()
-    
+
     await interaction.response.send_message(f"{character_name} left {location}.")
 
 @client.tree.command(name="shop", description="View available items in the shop")
@@ -324,18 +291,18 @@ async def buy(interaction: discord.Interaction, item: str):
     if user_id not in client.characters:
         await interaction.response.send_message("Create a character first!")
         return
-    
+
     if item not in client.shop_items:
         await interaction.response.send_message("Item not available!")
         return
-    
+
     char = client.characters[user_id]
     price = client.shop_items[item]
-    
+
     if char.coins < price:
         await interaction.response.send_message("Not enough coins!")
         return
-    
+
     char.coins -= price
     char.inventory["consumables"].append(item)
     await interaction.response.send_message(f"Bought {item} for {price} coins!")
@@ -344,21 +311,21 @@ async def buy(interaction: discord.Interaction, item: str):
 async def loot(interaction: discord.Interaction, character_name: str):
     conn = connect()
     cursor = conn.cursor()
-    
+
     # Get character location and info
     cursor.execute("""
     SELECT active_location FROM profiles
     WHERE user_id = ? AND character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
-    
+
     if not character or not character[0]:
         await interaction.response.send_message(f"{character_name} is not in any location!")
         conn.close()
         return
-        
+
     current_location = character[0]
-    
+
     # Random chance (20%) to encounter enemy
     if random.random() < 0.2:
         cursor.execute("""
@@ -367,14 +334,14 @@ async def loot(interaction: discord.Interaction, character_name: str):
         ORDER BY RANDOM() LIMIT 1
         """, (current_location,))
         enemy = cursor.fetchone()
-        
+
         if enemy:
             await interaction.response.send_message(
                 f"⚔️ While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}\n(Combat system coming soon™)"
             )
             conn.close()
             return
-    
+
     # Get random loot from current location
     cursor.execute("""
     SELECT name, description, value, hp_effect FROM loot_items
@@ -382,12 +349,12 @@ async def loot(interaction: discord.Interaction, character_name: str):
     ORDER BY RANDOM() LIMIT 1
     """, (current_location,))
     loot = cursor.fetchone()
-    
+
     if not loot:
         await interaction.response.send_message("Found nothing of value...")
         conn.close()
         return
-        
+
     # Add item to inventory
     cursor.execute("""
     INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
@@ -395,10 +362,10 @@ async def loot(interaction: discord.Interaction, character_name: str):
     FROM profiles
     WHERE user_id = ? AND character_name = ?
     """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
-    
+
     conn.commit()
     conn.close()
-    
+
     embed = discord.Embed(
         title="🎁 Loot Found!",
         description=f"{character_name} found: {loot[0]}\n{loot[1]}",
@@ -407,7 +374,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
     embed.add_field(name="Value", value=f"{loot[2]} GP")
     if loot[3] != 0:
         embed.add_field(name="HP Effect", value=str(loot[3]))
-    
+
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="weather", description="Check the current weather")
@@ -425,7 +392,3 @@ finally:
     # Cleanup
     if not client.is_closed():
         client.close()
-
-
-
-
