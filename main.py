@@ -158,9 +158,9 @@ async def profile(interaction: discord.Interaction, character_name: str):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT character_name, nen_type, hp, level, active_location 
-    FROM profiles
-    WHERE user_id = ? AND character_name = ?
+    SELECT p.character_name, p.nen_type, p.hp, p.level, p.active_location, p.character_id
+    FROM profiles p
+    WHERE p.user_id = ? AND p.character_name = ?
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
 
@@ -174,6 +174,25 @@ async def profile(interaction: discord.Interaction, character_name: str):
     embed.add_field(name="HP", value=f"{character[2]}/100")
     embed.add_field(name="Level", value=str(character[3]))
     embed.add_field(name="Location", value=character[4] or "Not in any location")
+
+    # Get inventory items
+    cursor.execute("""
+    SELECT item_name, description, value, hp_effect 
+    FROM inventory 
+    WHERE character_id = ?
+    """, (character[5],))
+    items = cursor.fetchall()
+
+    if items:
+        inventory_text = ""
+        for item in items:
+            inventory_text += f"• {item[0]} (Value: {item[2]} GP"
+            if item[3] != 0:
+                inventory_text += f", HP: {item[3]}"
+            inventory_text += ")\n"
+        embed.add_field(name="Inventory", value=inventory_text, inline=False)
+    else:
+        embed.add_field(name="Inventory", value="Empty", inline=False)
 
     await interaction.response.send_message(embed=embed)
     conn.close()
@@ -394,3 +413,45 @@ finally:
     # Cleanup
     if not client.is_closed():
         client.close()
+
+@client.tree.command(name="remove_item", description="Remove an item from your character's inventory")
+async def remove_item(interaction: discord.Interaction, character_name: str, item_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    # Check if item exists in inventory
+    cursor.execute("""
+    SELECT id FROM inventory
+    WHERE character_id = ? AND item_name = ?
+    LIMIT 1
+    """, (character[0], item_name))
+    item = cursor.fetchone()
+
+    if not item:
+        await interaction.response.send_message(f"{character_name} doesn't have a {item_name}!")
+        conn.close()
+        return
+
+    # Remove the item
+    cursor.execute("""
+    DELETE FROM inventory
+    WHERE id = ?
+    """, (item[0],))
+    
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"Removed {item_name} from {character_name}'s inventory.")
+
