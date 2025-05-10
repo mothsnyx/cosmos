@@ -413,27 +413,30 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        conn = connect()
-        cursor = conn.cursor()
-
-        # Roll dice immediately
+        # First roll
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
 
-        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
+        embed = discord.Embed(title="First Combat Roll", color=discord.Color.blue())
         embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
         embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
         if player_roll == enemy_roll:
             embed.description = f"The {self.enemy_name} changed its mind and fled!"
+            await interaction.response.send_message(embed=embed)
+            self.stop()
+            return
         elif player_roll > enemy_roll:
+            # Handle victory
+            conn = connect()
+            cursor = conn.cursor()
             cursor.execute("""
             SELECT active_location FROM profiles
             WHERE character_name = ?
             """, (self.character_name,))
             location = cursor.fetchone()[0]
 
-            # 70% chance to find loot after victory
+            # 70% chance to find loot
             if random.random() < 0.7:
                 cursor.execute("""
                 SELECT name, description, value, hp_effect FROM loot_items
@@ -456,20 +459,42 @@ class EncounterView(discord.ui.View):
                         embed.add_field(name="HP Effect", value=str(loot[3]))
 
             embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+            conn.close()
+            await interaction.response.send_message(embed=embed)
+            self.stop()
         else:
-            # Immediate second roll if first roll failed
-            player_roll_2 = random.randint(1, 20)
-            enemy_roll_2 = random.randint(1, 20)
+            embed.description = "You lost the first roll! Choose to flee or fight again!"
+            # Create new view for second chance
+            view = SecondChanceView(self.character_name, self.enemy_name)
+            await interaction.response.send_message(embed=embed, view=view)
+            self.stop()
 
-            embed.add_field(name=f"Second Chance Roll", value=f"{self.character_name}: {player_roll_2} vs {self.enemy_name}: {enemy_roll_2}", inline=False)
+class SecondChanceView(discord.ui.View):
+    def __init__(self, character_name: str, enemy_name: str):
+        super().__init__()
+        self.character_name = character_name
+        self.enemy_name = enemy_name
 
-            if player_roll_2 > enemy_roll_2:
-                embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
-            else:
-                embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
+    @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
+    async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(f"{self.character_name} fled safely from the {self.enemy_name}.")
+        self.stop()
+
+    @discord.ui.button(label="Fight Again", style=discord.ButtonStyle.danger)
+    async def fight_again(self, interaction: discord.Interaction, button: discord.ui.Button):
+        player_roll = random.randint(1, 20)
+        enemy_roll = random.randint(1, 20)
+
+        embed = discord.Embed(title="Second Combat Roll", color=discord.Color.blue())
+        embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
+        embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+
+        if player_roll > enemy_roll:
+            embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
+        else:
+            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
 
         await interaction.response.send_message(embed=embed)
-        conn.close()
         self.stop()
 
 @client.tree.command(name="weather", description="Check the current weather")
@@ -548,27 +573,30 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        conn = connect()
-        cursor = conn.cursor()
-
-        # Roll dice immediately
+        # First roll
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
 
-        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
+        embed = discord.Embed(title="First Combat Roll", color=discord.Color.blue())
         embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
         embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
         if player_roll == enemy_roll:
             embed.description = f"The {self.enemy_name} changed its mind and fled!"
+            await interaction.response.send_message(embed=embed)
+            self.stop()
+            return
         elif player_roll > enemy_roll:
+            # Handle victory
+            conn = connect()
+            cursor = conn.cursor()
             cursor.execute("""
             SELECT active_location FROM profiles
             WHERE character_name = ?
             """, (self.character_name,))
             location = cursor.fetchone()[0]
 
-            # 70% chance to find loot after victory
+            # 70% chance to find loot
             if random.random() < 0.7:
                 cursor.execute("""
                 SELECT name, description, value, hp_effect FROM loot_items
@@ -591,21 +619,15 @@ class EncounterView(discord.ui.View):
                         embed.add_field(name="HP Effect", value=str(loot[3]))
 
             embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+            conn.close()
+            await interaction.response.send_message(embed=embed)
+            self.stop()
         else:
-            # Immediate second roll if first roll failed
-            player_roll_2 = random.randint(1, 20)
-            enemy_roll_2 = random.randint(1, 20)
-
-            embed.add_field(name=f"Second Chance Roll", value=f"{self.character_name}: {player_roll_2} vs {self.enemy_name}: {enemy_roll_2}", inline=False)
-
-            if player_roll_2 > enemy_roll_2:
-                embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
-            else:
-                embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
-
-        await interaction.response.send_message(embed=embed)
-        conn.close()
-        self.stop()
+            embed.description = "You lost the first roll! Choose to flee or fight again!"
+            # Create new view for second chance
+            view = SecondChanceView(self.character_name, self.enemy_name)
+            await interaction.response.send_message(embed=embed, view=view)
+            self.stop()
 
 @client.tree.command(name="encounter", description="Start a random enemy encounter")
 async def encounter(interaction: discord.Interaction, character_name: str):
