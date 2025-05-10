@@ -524,6 +524,8 @@ async def encounter(interaction: discord.Interaction, character_name: str):
 
 @client.tree.command(name="fight", description="Roll a die to fight the current enemy")
 async def fight(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
     if character_name not in active_encounters:
         await interaction.response.send_message(
             f"No active encounter for {character_name}.\nUse /encounter to start one."
@@ -545,6 +547,36 @@ async def fight(interaction: discord.Interaction, character_name: str):
         del active_encounters[character_name]
         embed.description = f"The {enemy_name} changed its mind and fled!"
     elif player_roll > enemy_roll:
+        # Get character's location
+        cursor.execute("""
+        SELECT active_location FROM profiles
+        WHERE user_id = ? AND character_name = ?
+        """, (interaction.user.id, character_name))
+        location = cursor.fetchone()[0]
+
+        # 70% chance to find loot after victory
+        if random.random() < 0.7:
+            cursor.execute("""
+            SELECT name, description, value, hp_effect FROM loot_items
+            WHERE location = ?
+            ORDER BY RANDOM() LIMIT 1
+            """, (location,))
+            loot = cursor.fetchone()
+
+            if loot:
+                # Add item to inventory
+                cursor.execute("""
+                INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                SELECT character_id, ?, ?, ?, ?
+                FROM profiles
+                WHERE user_id = ? AND character_name = ?
+                """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
+                conn.commit()
+
+                embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
+                if loot[3] != 0:
+                    embed.add_field(name="HP Effect", value=str(loot[3]))
+
         del active_encounters[character_name]
         embed.description = f"🏆 Victory! {character_name} defeated the {enemy_name}!"
     else:
