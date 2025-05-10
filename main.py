@@ -414,6 +414,19 @@ class EncounterView(discord.ui.View):
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
 
+    async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
+        damage_multipliers = {
+            "High School": 5,
+            "City": 10,
+            "Sewers": 15,
+            "Forest": 15,
+            "Abandoned Facility": 20
+        }
+        base_damage = damage_multipliers.get(location, 5)
+        if is_second_roll:
+            base_damage *= 2
+        return base_damage
+
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.character_name in active_encounters:
@@ -423,6 +436,17 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        conn = connect()
+        cursor = conn.cursor()
+
+        # Get character's location and current HP
+        cursor.execute("""
+        SELECT active_location, hp FROM profiles
+        WHERE character_name = ?
+        """, (self.character_name,))
+        char_data = cursor.fetchone()
+        location, current_hp = char_data
+
         # First roll
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
@@ -434,6 +458,7 @@ class EncounterView(discord.ui.View):
         if player_roll == enemy_roll:
             embed.description = f"The {self.enemy_name} changed its mind and fled!"
             await interaction.response.send_message(embed=embed)
+            conn.close()
             self.stop()
             return
         elif player_roll > enemy_roll:
@@ -473,17 +498,44 @@ class EncounterView(discord.ui.View):
             await interaction.response.send_message(embed=embed)
             self.stop()
         else:
-            embed.description = "You lost the first roll! Choose to flee or fight again!"
+            # Calculate and apply damage
+            damage = await self.calculate_damage(location)
+            new_hp = max(0, current_hp - damage)
+            cursor.execute("""
+            UPDATE profiles
+            SET hp = ?
+            WHERE character_name = ?
+            """, (new_hp, self.character_name))
+            conn.commit()
+
+            embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
+            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
+
             # Create new view for second chance
-            view = SecondChanceView(self.character_name, self.enemy_name)
+            view = SecondChanceView(self.character_name, self.enemy_name, location)
             await interaction.response.send_message(embed=embed, view=view)
+            conn.close()
             self.stop()
 
 class SecondChanceView(discord.ui.View):
-    def __init__(self, character_name: str, enemy_name: str):
+    def __init__(self, character_name: str, enemy_name: str, location: str):
         super().__init__()
         self.character_name = character_name
         self.enemy_name = enemy_name
+        self.location = location
+
+    async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
+        damage_multipliers = {
+            "High School": 5,
+            "City": 10,
+            "Sewers": 15,
+            "Forest": 15,
+            "Abandoned Facility": 20
+        }
+        base_damage = damage_multipliers.get(location, 5)
+        if is_second_roll:
+            base_damage *= 2
+        return base_damage
 
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -492,6 +544,16 @@ class SecondChanceView(discord.ui.View):
 
     @discord.ui.button(label="Fight Again", style=discord.ButtonStyle.danger)
     async def fight_again(self, interaction: discord.Interaction, button: discord.ui.Button):
+        conn = connect()
+        cursor = conn.cursor()
+
+        # Get character's current HP
+        cursor.execute("""
+        SELECT hp FROM profiles
+        WHERE character_name = ?
+        """, (self.character_name,))
+        current_hp = cursor.fetchone()[0]
+
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
 
@@ -502,9 +564,22 @@ class SecondChanceView(discord.ui.View):
         if player_roll > enemy_roll:
             embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
         else:
-            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
+            # Calculate double damage on second loss
+            damage = await self.calculate_damage(self.location, is_second_roll=True)
+            new_hp = max(0, current_hp - damage)
+
+            cursor.execute("""
+            UPDATE profiles
+            SET hp = ?
+            WHERE character_name = ?
+            """, (new_hp, self.character_name))
+            conn.commit()
+
+            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
+            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
 
         await interaction.response.send_message(embed=embed)
+        conn.close()
         self.stop()
 
 @client.tree.command(name="weather", description="Check the current weather")
@@ -574,6 +649,19 @@ class EncounterView(discord.ui.View):
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
 
+    async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
+        damage_multipliers = {
+            "High School": 5,
+            "City": 10,
+            "Sewers": 15,
+            "Forest": 15,
+            "Abandoned Facility": 20
+        }
+        base_damage = damage_multipliers.get(location, 5)
+        if is_second_roll:
+            base_damage *= 2
+        return base_damage
+
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.character_name in active_encounters:
@@ -583,6 +671,17 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        conn = connect()
+        cursor = conn.cursor()
+
+        # Get character's location and current HP
+        cursor.execute("""
+        SELECT active_location, hp FROM profiles
+        WHERE character_name = ?
+        """, (self.character_name,))
+        char_data = cursor.fetchone()
+        location, current_hp = char_data
+
         # First roll
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
@@ -594,6 +693,7 @@ class EncounterView(discord.ui.View):
         if player_roll == enemy_roll:
             embed.description = f"The {self.enemy_name} changed its mind and fled!"
             await interaction.response.send_message(embed=embed)
+            conn.close()
             self.stop()
             return
         elif player_roll > enemy_roll:
@@ -633,10 +733,23 @@ class EncounterView(discord.ui.View):
             await interaction.response.send_message(embed=embed)
             self.stop()
         else:
-            embed.description = "You lost the first roll! Choose to flee or fight again!"
+            # Calculate and apply damage
+            damage = await self.calculate_damage(location)
+            new_hp = max(0, current_hp - damage)
+            cursor.execute("""
+            UPDATE profiles
+            SET hp = ?
+            WHERE character_name = ?
+            """, (new_hp, self.character_name))
+            conn.commit()
+
+            embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
+            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
+
             # Create new view for second chance
-            view = SecondChanceView(self.character_name, self.enemy_name)
+            view = SecondChanceView(self.character_name, self.enemy_name, location)
             await interaction.response.send_message(embed=embed, view=view)
+            conn.close()
             self.stop()
 
 @client.tree.command(name="encounter", description="Start a random enemy encounter")
