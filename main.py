@@ -394,6 +394,31 @@ async def loot(interaction: discord.Interaction, character_name: str):
 
     conn.close()
 
+# Encounter system variables
+active_encounters = {}
+
+class EncounterView(discord.ui.View):
+    def __init__(self, character_name: str, enemy_name: str, enemy_description: str):
+        super().__init__()
+        self.character_name = character_name
+        self.enemy_name = enemy_name
+        self.enemy_description = enemy_description
+
+    @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
+    async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.character_name in active_encounters:
+            del active_encounters[self.character_name]
+        await interaction.response.send_message(f"{self.character_name} fled safely from the {self.enemy_name}.")
+        self.stop()
+
+    @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
+    async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        active_encounters[self.character_name] = {'enemy': self.enemy_name, 'failed_attempts': 0}
+        await interaction.response.send_message(
+            f"{self.character_name} chose to fight the {self.enemy_name}!\nUse /fight to roll a die."
+        )
+        self.stop()
+
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
     if random.random() < 0.3:  # 30% chance to change weather
