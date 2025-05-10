@@ -202,6 +202,15 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     selected_area = client.areas[area]
     char_level = character[1]
     
+    # Location descriptions
+    location_descriptions = {
+        "High School": "A normal-looking High School with noisy classrooms, messy lockers and weird rumors in the halls. It's eerily silent at night.",
+        "City": "Busy streets, dark alleys and strange people. The deeper you go, the more dangerous it gets.",
+        "Sewers": "Dark, damp tunnels under the city. It smells bad and worse things live down here.",
+        "Forest": "A thick forest just outside town. It's quiet, too quiet. You always feel like something's watching.",
+        "Abandoned Facility": "An old lab that's falling apart. It's locked up, full of weird tech... and maybe something still inside."
+    }
+    
     if char_level < selected_area.min_level:
         await interaction.response.send_message(
             f"Your level ({char_level}) is too low for {area}! You need to be level {selected_area.min_level}-{selected_area.max_level}."
@@ -257,7 +266,8 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     conn.commit()
     conn.close()
     
-    await interaction.response.send_message(f"{character_name} entered {area}.")
+    embed = discord.Embed(title=f"{character_name} entered {area}", description=location_descriptions[area], color=discord.Color.blue())
+    await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="leave", description="Leave your current location with a specific character")
 async def leave(interaction: discord.Interaction, character_name: str):
