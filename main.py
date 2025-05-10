@@ -592,6 +592,15 @@ async def weather(interaction: discord.Interaction):
         client.current_weather = random.choice(client.weather)
     await interaction.response.send_message(f"Current weather: {client.current_weather}")
 
+# Register all commands at startup
+@client.event
+async def setup_hook():
+    try:
+        await client.tree.sync()
+        print("Commands synced successfully")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
+
 @client.tree.command(name="remove_item", description="Remove an item from your character's inventory")
 async def remove_item(interaction: discord.Interaction, character_name: str, item_name: str):
     conn = connect()
@@ -730,19 +739,6 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     )
     view = EncounterView(character_name, enemy[0], enemy[1])
     await interaction.response.send_message(embed=embed, view=view)
-
-@client.tree.command(name="flee", description="Attempt to flee from the current enemy")
-async def flee(interaction: discord.Interaction, character_name: str):
-    if character_name not in active_encounters:
-        await interaction.response.send_message(
-            f"No active encounter for {character_name}."
-        )
-        return
-
-    del active_encounters[character_name]
-    await interaction.response.send_message(
-        f"{character_name} managed to flee, but suffered injuries in the process."
-    )
 
 try:
     client.run(os.getenv('DISCORD_TOKEN'))
