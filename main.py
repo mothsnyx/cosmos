@@ -153,21 +153,31 @@ async def list_characters(interaction: discord.Interaction):
                        inline=False)
     await interaction.response.send_message(embed=embed)
 
-@client.tree.command(name="profile", description="Show your character profile")
-async def profile(interaction: discord.Interaction):
-    user_id = str(interaction.user.id)
-    if user_id not in client.characters:
-        await interaction.response.send_message("You don't have a character yet! Use /create_character to make one.")
+@client.tree.command(name="profile", description="Show a character's profile")
+async def profile(interaction: discord.Interaction, character_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+    SELECT character_name, nen_type, hp, level, active_location 
+    FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+    
+    if not character:
+        await interaction.response.send_message("Character not found! Use /create_character to make one.")
+        conn.close()
         return
     
-    char = client.characters[user_id]
-    embed = discord.Embed(title=f"{char.name}'s Profile", color=discord.Color.blue())
-    embed.add_field(name="Nen Type", value=char.nen_type)
-    embed.add_field(name="HP", value=f"{char.hp}/{char.max_hp}")
-    embed.add_field(name="Coins", value=str(char.coins))
-    embed.add_field(name="Items", value=", ".join(char.inventory["items"]) or "None")
-    embed.add_field(name="Consumables", value=", ".join(char.inventory["consumables"]) or "None")
+    embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
+    embed.add_field(name="Nen Type", value=character[1])
+    embed.add_field(name="HP", value=f"{character[2]}/100")
+    embed.add_field(name="Level", value=str(character[3]))
+    embed.add_field(name="Location", value=character[4] or "Not in any location")
+    
     await interaction.response.send_message(embed=embed)
+    conn.close()
 
 @client.tree.command(name="explore", description="Explore an area with a specific character")
 @app_commands.choices(area=[
