@@ -347,9 +347,13 @@ async def loot(interaction: discord.Interaction, character_name: str):
         enemy = cursor.fetchone()
 
         if enemy:
-            await interaction.response.send_message(
-                f"⚔️ While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}\n(Combat system coming soon™)"
+            embed = discord.Embed(
+                title="Enemy Encounter", 
+                description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
+                color=discord.Color.red()
             )
+            view = EncounterView(character_name, enemy[0], enemy[1])
+            await interaction.response.send_message(embed=embed, view=view)
             conn.close()
             return
 
