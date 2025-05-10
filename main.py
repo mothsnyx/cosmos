@@ -75,7 +75,11 @@ client = RPGBot()
 @client.event
 async def on_ready():
     print(f'Logged in as {client.user}')
-    await client.tree.sync()
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {len(synced)} command(s)")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
 
 # Commands
 @client.tree.command(name="create_character", description="Create your character")
