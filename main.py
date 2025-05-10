@@ -413,10 +413,63 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        active_encounters[self.character_name] = {'enemy': self.enemy_name, 'failed_attempts': 0}
-        await interaction.response.send_message(
-            f"{self.character_name} chose to fight the {self.enemy_name}!\nUse /fight to roll a die."
-        )
+        conn = connect()
+        cursor = conn.cursor()
+
+        # Roll dice immediately
+        player_roll = random.randint(1, 20)
+        enemy_roll = random.randint(1, 20)
+
+        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
+        embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
+        embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+
+        if player_roll == enemy_roll:
+            embed.description = f"The {self.enemy_name} changed its mind and fled!"
+        elif player_roll > enemy_roll:
+            cursor.execute("""
+            SELECT active_location FROM profiles
+            WHERE character_name = ?
+            """, (self.character_name,))
+            location = cursor.fetchone()[0]
+
+            # 70% chance to find loot after victory
+            if random.random() < 0.7:
+                cursor.execute("""
+                SELECT name, description, value, hp_effect FROM loot_items
+                WHERE location = ?
+                ORDER BY RANDOM() LIMIT 1
+                """, (location,))
+                loot = cursor.fetchone()
+
+                if loot:
+                    cursor.execute("""
+                    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                    SELECT character_id, ?, ?, ?, ?
+                    FROM profiles
+                    WHERE character_name = ?
+                    """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                    conn.commit()
+
+                    embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
+                    if loot[3] != 0:
+                        embed.add_field(name="HP Effect", value=str(loot[3]))
+
+            embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+        else:
+            # Immediate second roll if first roll failed
+            player_roll_2 = random.randint(1, 20)
+            enemy_roll_2 = random.randint(1, 20)
+
+            embed.add_field(name=f"Second Chance Roll", value=f"{self.character_name}: {player_roll_2} vs {self.enemy_name}: {enemy_roll_2}", inline=False)
+
+            if player_roll_2 > enemy_roll_2:
+                embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
+            else:
+                embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
+
+        await interaction.response.send_message(embed=embed)
+        conn.close()
         self.stop()
 
 @client.tree.command(name="weather", description="Check the current weather")
@@ -495,10 +548,63 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        active_encounters[self.character_name] = {'enemy': self.enemy_name, 'failed_attempts': 0}
-        await interaction.response.send_message(
-            f"{self.character_name} chose to fight the {self.enemy_name}!\nUse /fight to roll a die."
-        )
+        conn = connect()
+        cursor = conn.cursor()
+
+        # Roll dice immediately
+        player_roll = random.randint(1, 20)
+        enemy_roll = random.randint(1, 20)
+
+        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
+        embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
+        embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+
+        if player_roll == enemy_roll:
+            embed.description = f"The {self.enemy_name} changed its mind and fled!"
+        elif player_roll > enemy_roll:
+            cursor.execute("""
+            SELECT active_location FROM profiles
+            WHERE character_name = ?
+            """, (self.character_name,))
+            location = cursor.fetchone()[0]
+
+            # 70% chance to find loot after victory
+            if random.random() < 0.7:
+                cursor.execute("""
+                SELECT name, description, value, hp_effect FROM loot_items
+                WHERE location = ?
+                ORDER BY RANDOM() LIMIT 1
+                """, (location,))
+                loot = cursor.fetchone()
+
+                if loot:
+                    cursor.execute("""
+                    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                    SELECT character_id, ?, ?, ?, ?
+                    FROM profiles
+                    WHERE character_name = ?
+                    """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                    conn.commit()
+
+                    embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
+                    if loot[3] != 0:
+                        embed.add_field(name="HP Effect", value=str(loot[3]))
+
+            embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+        else:
+            # Immediate second roll if first roll failed
+            player_roll_2 = random.randint(1, 20)
+            enemy_roll_2 = random.randint(1, 20)
+
+            embed.add_field(name=f"Second Chance Roll", value=f"{self.character_name}: {player_roll_2} vs {self.enemy_name}: {enemy_roll_2}", inline=False)
+
+            if player_roll_2 > enemy_roll_2:
+                embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
+            else:
+                embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name}!"
+
+        await interaction.response.send_message(embed=embed)
+        conn.close()
         self.stop()
 
 @client.tree.command(name="encounter", description="Start a random enemy encounter")
@@ -543,73 +649,6 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     )
     view = EncounterView(character_name, enemy[0], enemy[1])
     await interaction.response.send_message(embed=embed, view=view)
-
-@client.tree.command(name="fight", description="Roll a die to fight the current enemy")
-async def fight(interaction: discord.Interaction, character_name: str):
-    conn = connect()
-    cursor = conn.cursor()
-    if character_name not in active_encounters:
-        await interaction.response.send_message(
-            f"No active encounter for {character_name}.\nUse /encounter to start one."
-        )
-        return
-
-    encounter_data = active_encounters[character_name]
-    enemy_name = encounter_data['enemy']
-
-    # Roll dice
-    player_roll = random.randint(1, 20)
-    enemy_roll = random.randint(1, 20)
-
-    embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
-    embed.add_field(name=f"{character_name}'s Roll", value=str(player_roll), inline=True)
-    embed.add_field(name=f"{enemy_name}'s Roll", value=str(enemy_roll), inline=True)
-
-    if player_roll == enemy_roll:
-        del active_encounters[character_name]
-        embed.description = f"The {enemy_name} changed its mind and fled!"
-    elif player_roll > enemy_roll:
-        # Get character's location
-        cursor.execute("""
-        SELECT active_location FROM profiles
-        WHERE user_id = ? AND character_name = ?
-        """, (interaction.user.id, character_name))
-        location = cursor.fetchone()[0]
-
-        # 70% chance to find loot after victory
-        if random.random() < 0.7:
-            cursor.execute("""
-            SELECT name, description, value, hp_effect FROM loot_items
-            WHERE location = ?
-            ORDER BY RANDOM() LIMIT 1
-            """, (location,))
-            loot = cursor.fetchone()
-
-            if loot:
-                # Add item to inventory
-                cursor.execute("""
-                INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-                SELECT character_id, ?, ?, ?, ?
-                FROM profiles
-                WHERE user_id = ? AND character_name = ?
-                """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
-                conn.commit()
-
-                embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
-                if loot[3] != 0:
-                    embed.add_field(name="HP Effect", value=str(loot[3]))
-
-        del active_encounters[character_name]
-        embed.description = f"🏆 Victory! {character_name} defeated the {enemy_name}!"
-    else:
-        encounter_data['failed_attempts'] += 1
-        if encounter_data['failed_attempts'] >= 2:
-            del active_encounters[character_name]
-            embed.description = f"🪦 {character_name} was defeated by the {enemy_name}!"
-        else:
-            embed.description = f"{character_name} was injured! Use /fight to continue or /flee to retreat."
-
-    await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="flee", description="Attempt to flee from the current enemy")
 async def flee(interaction: discord.Interaction, character_name: str):
