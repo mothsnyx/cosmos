@@ -1,4 +1,4 @@
-from database.db import add_enemy, add_loot_item
+from database import add_enemy, add_loot_item
 
 # Preload enemies
 def preload_enemies():

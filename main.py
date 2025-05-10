@@ -351,36 +351,33 @@ async def loot(interaction: discord.Interaction, character_name: str):
         """, (current_location,))
         loot = cursor.fetchone()
 
-        if not loot:
-            await interaction.response.send_message(f"{character_name} found nothing of value...")
-            conn.close()
-            return
-    else:
-        await interaction.response.send_message(f"{character_name} found nothing of value...")
-        conn.close()
-        return
-
+         if loot:
     # Add item to inventory
-    cursor.execute("""
-    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-    SELECT character_id, ?, ?, ?, ?
-    FROM profiles
-    WHERE user_id = ? AND character_name = ?
-    """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
+cursor.execute("""
+INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+SELECT character_id, ?, ?, ?, ?
+FROM profiles
+WHERE user_id = ? AND character_name = ?
+""", (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
 
-    conn.commit()
-    conn.close()
+conn.commit()  # Commit the inventory addition
 
-    embed = discord.Embed(
-        title="🎁 Loot Found!",
-        description=f"{character_name} found: {loot[0]}\n{loot[1]}",
-        color=discord.Color.gold()
-    )
-    embed.add_field(name="Value", value=f"{loot[2]} GP")
-    if loot[3] != 0:
-        embed.add_field(name="HP Effect", value=str(loot[3]))
+embed = discord.Embed(
+    title="🎁 Loot Found!",
+    description=f"{character_name} found: {loot[0]}\n{loot[1]}",
+    color=discord.Color.gold()
+)
+embed.add_field(name="Value", value=f"{loot[2]} GP")
+if loot[3] != 0:
+    embed.add_field(name="HP Effect", value=str(loot[3]))
 
-    await interaction.response.send_message(embed=embed)
+await interaction.response.send_message(embed=embed)
+else:
+await interaction.response.send_message(f"{character_name} found nothing of value...")
+else:
+await interaction.response.send_message(f"{character_name} found nothing of value...")
+
+conn.close()
 
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
