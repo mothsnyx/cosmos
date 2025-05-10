@@ -29,8 +29,23 @@ def preload_loot_items():
     # City Loot
     add_loot_item("Lighter", "A small, refillable lighter.", 7, 0, 0.25, "City")
     add_loot_item("Phone Charger", "A basic phone charger.", 15, 0, 0.15, "City")
-
-    # More loot items for other locations...
+    add_loot_item("Wallet", "A lost wallet with some cash.", 50, 0, 0.1, "City")
+    add_loot_item("First Aid Kit", "A basic medical kit.", 30, 20, 0.2, "City")
+    
+    # Sewers Loot
+    add_loot_item("Rusty Key", "An old key, might be useful.", 25, 0, 0.2, "Sewers")
+    add_loot_item("Strange Crystal", "A glowing crystal formation.", 100, 0, 0.05, "Sewers")
+    add_loot_item("Toxic Waste", "Dangerous but valuable.", 75, -10, 0.15, "Sewers")
+    
+    # Forest Loot
+    add_loot_item("Herbs", "Medicinal herbs.", 20, 15, 0.3, "Forest")
+    add_loot_item("Beast Fang", "A sharp fang from a creature.", 45, 0, 0.2, "Forest")
+    add_loot_item("Spirit Essence", "Glowing ethereal substance.", 90, 0, 0.1, "Forest")
+    
+    # Abandoned Facility Loot
+    add_loot_item("Research Data", "Valuable experiment data.", 150, 0, 0.1, "Abandoned Facility")
+    add_loot_item("Prototype Device", "Strange technological device.", 200, 0, 0.05, "Abandoned Facility")
+    add_loot_item("Healing Nanites", "Advanced medical technology.", 100, 50, 0.15, "Abandoned Facility")
 
 # Run preloading
 if __name__ == "__main__":
