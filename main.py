@@ -183,12 +183,22 @@ async def profile(interaction: discord.Interaction, character_name: str):
     items = cursor.fetchall()
 
     if items:
-        inventory_text = ""
+        # Count duplicate items
+        item_counts = {}
         for item in items:
-            inventory_text += f"• {item[0]} (Value: {item[2]} GP"
-            if item[3] != 0:
-                inventory_text += f", HP: {item[3]}"
-            inventory_text += ")\n"
+            item_key = (item[0], item[2], item[3])  # name, value, hp_effect
+            item_counts[item_key] = item_counts.get(item_key, 0) + 1
+
+        inventory_text = ""
+        for item_key, count in item_counts.items():
+            name, value, hp_effect = item_key
+            inventory_text += f"• {name} (Value: {value} GP"
+            if hp_effect != 0:
+                inventory_text += f", HP: {hp_effect}"
+            if count > 1:
+                inventory_text += f") [x{count}]\n"
+            else:
+                inventory_text += ")\n"
         embed.add_field(name="Inventory", value=inventory_text, inline=False)
     else:
         embed.add_field(name="Inventory", value="Empty", inline=False)
