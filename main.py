@@ -351,7 +351,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
         """, (current_location,))
         loot = cursor.fetchone()
 
-         if loot:
+        if loot:
             # Add item to inventory
             cursor.execute("""
             INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
