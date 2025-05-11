@@ -161,7 +161,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT p.character_name, p.nen_type, p.hp, p.level, p.active_location, p.character_id
+    SELECT p.character_name, p.hp, p.level, p.active_location, p.character_id, p.xp
     FROM profiles p
     WHERE p.user_id = ? AND p.character_name = ?
     """, (interaction.user.id, character_name))
@@ -172,11 +172,14 @@ async def profile(interaction: discord.Interaction, character_name: str):
         conn.close()
         return
 
+    # Calculate XP needed for next level
+    xp_for_next_level = 100 * (character[2] + 1) * 1.5
+
     embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
-    embed.add_field(name="Nen Type", value=character[1])
-    embed.add_field(name="HP", value=f"{character[2]}/100")
-    embed.add_field(name="Level", value=str(character[3]))
-    embed.add_field(name="Location", value=character[4] or "Not in any location")
+    embed.add_field(name="HP", value=f"{character[1]}/100")
+    embed.add_field(name="Level", value=str(character[2]))
+    embed.add_field(name="XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}")
+    embed.add_field(name="Location", value=character[3] or "Not in any location")
 
     # Get inventory items
     cursor.execute("""
