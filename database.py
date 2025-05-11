@@ -24,6 +24,15 @@ def setup_database():
     )
     """)
 
+    # Add gp column if it doesn't exist
+    cursor.execute("""
+    SELECT name FROM pragma_table_info('profiles') WHERE name='gp'
+    """)
+    if not cursor.fetchone():
+        cursor.execute("""
+        ALTER TABLE profiles ADD COLUMN gp INTEGER DEFAULT 0
+        """)
+
     # Table for character inventories
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
