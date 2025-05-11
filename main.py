@@ -413,11 +413,11 @@ async def loot(interaction: discord.Interaction, character_name: str):
             }
             xp_gain = location_xp.get(current_location, 20)
             leveled_up = update_character_xp(character_name, xp_gain)
-            
+
             if leveled_up:
                 embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
             embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
-            
+
             await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message(f"{character_name} found nothing of value...")
@@ -526,12 +526,12 @@ class EncounterView(discord.ui.View):
             }
             xp_gain = location_xp.get(location, 50)
             leveled_up = update_character_xp(self.character_name, xp_gain)
-            
+
             embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
             embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
             if leveled_up:
                 embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
-            
+
             conn.close()
             await interaction.response.send_message(embed=embed)
             self.stop()
@@ -548,7 +548,7 @@ class EncounterView(discord.ui.View):
 
             embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
-            
+
             if new_hp == 0:
                 embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
             elif new_hp <= 10:
@@ -784,6 +784,35 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     )
     view = EncounterView(character_name, enemy[0], enemy[1])
     await interaction.response.send_message(embed=embed, view=view)
+
+@client.tree.command(name="set_level", description="Manually set your character's level")
+async def set_level(interaction: discord.Interaction, character_name: str, level: int):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    # Update character's level
+    cursor.execute("""
+    UPDATE profiles
+    SET level = ?
+    WHERE character_id = ?
+    """, (level, character[0]))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"{character_name}'s level has been set to {level}.")
 
 try:
     client.run(os.getenv('DISCORD_TOKEN'))
