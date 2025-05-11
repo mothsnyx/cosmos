@@ -419,17 +419,18 @@ class EncounterView(discord.ui.View):
         self.enemy_description = enemy_description
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
-        damage_multipliers = {
-            "High School": 10,
-            "City": 20,
-            "Sewers": 35,
-            "Forest": 30,
-            "Abandoned Facility": 40
+        damage_ranges = {
+            "High School": (2, 20),
+            "City": (10, 30),
+            "Sewers": (30, 50),
+            "Forest": (15, 30),
+            "Abandoned Facility": (45, 65)
         }
-        base_damage = damage_multipliers.get(location, 5)
+        min_dmg, max_dmg = damage_ranges.get(location, (2, 20))
+        damage = random.randint(min_dmg, max_dmg)
         if is_second_roll:
-            base_damage *= 2
-        return base_damage
+            damage *= 2
+        return damage
 
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -534,17 +535,18 @@ class SecondChanceView(discord.ui.View):
         self.location = location
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
-        damage_multipliers = {
-            "High School": 5,
-            "City": 10,
-            "Sewers": 15,
-            "Forest": 15,
-            "Abandoned Facility": 20
+        damage_ranges = {
+            "High School": (2, 20),
+            "City": (10, 30),
+            "Sewers": (30, 50),
+            "Forest": (15, 30),
+            "Abandoned Facility": (45, 65)
         }
-        base_damage = damage_multipliers.get(location, 5)
+        min_dmg, max_dmg = damage_ranges.get(location, (2, 20))
+        damage = random.randint(min_dmg, max_dmg)
         if is_second_roll:
-            base_damage *= 2
-        return base_damage
+            damage *= 2
+        return damage
 
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
