@@ -341,11 +341,11 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
         return
 
     item_details = client.shop_items[item]
-    
+
     # Check if player has enough GP
     cursor.execute("SELECT gp FROM profiles WHERE character_id = ?", (character[0],))
     current_gp = cursor.fetchone()[0]
-    
+
     if current_gp < item_details['price']:
         await interaction.response.send_message(f"Not enough GP! You need {item_details['price']} GP but only have {current_gp} GP.")
         conn.close()
@@ -354,7 +354,7 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
     # Subtract GP and add item to inventory
     cursor.execute("UPDATE profiles SET gp = gp - ? WHERE character_id = ?", 
                   (item_details['price'], character[0]))
-    
+
     cursor.execute("""
     INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
     VALUES (?, ?, ?, ?, ?)
@@ -649,7 +649,17 @@ class SecondChanceView(discord.ui.View):
             """, (new_hp, self.character_name))
             conn.commit()
 
+            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
+            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
 
+            if new_hp == 0:
+                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
+            elif new_hp <= 10:
+                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
+
+            await interaction.response.send_message(embed=embed)
+            conn.close()
+            self.stop()
 
 @client.tree.command(name="sell_item", description="Sell an item from your inventory")
 async def sell_item(interaction: discord.Interaction, character_name: str, item_name: str):
@@ -695,17 +705,6 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
     await interaction.response.send_message(f"Sold {item_name} for {sell_value} GP!")
 
 
-            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
-            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
-
-            if new_hp == 0:
-                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
-            elif new_hp <= 10:
-                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
-
-        await interaction.response.send_message(embed=embed)
-        conn.close()
-        self.stop()
 
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
