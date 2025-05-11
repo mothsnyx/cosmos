@@ -191,7 +191,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
     SELECT item_name, description, value, hp_effect 
     FROM inventory 
     WHERE character_id = ?
-    """, (character[5],))
+    """, (character[4],))
     items = cursor.fetchall()
 
     if items:
@@ -358,7 +358,7 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
     cursor.execute("""
     INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
     VALUES (?, ?, ?, ?, ?)
-    """, (character[0], item, item_details['description'], item_details['price'], item_details['hp_effect']))
+    """, (character[0], item, item_details['description'], item_details['price'], item_details.get('hp_effect', 0)))
 
     conn.commit()
     conn.close()
