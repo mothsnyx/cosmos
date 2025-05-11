@@ -56,6 +56,31 @@ def setup_database():
         description TEXT,
         value INTEGER,
         hp_effect INTEGER,
+        drop_rate REAL,
+        location TEXT
+    )
+    """)
+
+    # Table for enemies
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS enemies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        level_min INTEGER,
+        level_max INTEGER,
+        location TEXT
+    )
+    """)
+
+    # Table for loot items
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS loot_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        description TEXT,
+        value INTEGER,
+        hp_effect INTEGER,
         drop_rate REAL, 
         location TEXT
     )
