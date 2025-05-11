@@ -19,7 +19,8 @@ def setup_database():
         level INTEGER DEFAULT 0,
         xp INTEGER DEFAULT 0,
         weapon TEXT,
-        active_location TEXT
+        active_location TEXT,
+        gp INTEGER DEFAULT 0
     )
     """)
 

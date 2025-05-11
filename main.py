@@ -175,10 +175,15 @@ async def profile(interaction: discord.Interaction, character_name: str):
     # Calculate XP needed for next level
     xp_for_next_level = 100 * (character[2] + 1) * 1.5
 
+    # Get GP
+    cursor.execute("SELECT gp FROM profiles WHERE character_name = ?", (character[0],))
+    gp = cursor.fetchone()[0]
+
     embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
     embed.add_field(name="HP", value=f"{character[1]}/100")
     embed.add_field(name="Level", value=str(character[2]))
     embed.add_field(name="XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}")
+    embed.add_field(name="GP", value=str(gp))
     embed.add_field(name="Location", value=character[3] or "Not in any location")
 
     # Get inventory items
@@ -337,7 +342,19 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
 
     item_details = client.shop_items[item]
     
-    # Add item to inventory
+    # Check if player has enough GP
+    cursor.execute("SELECT gp FROM profiles WHERE character_id = ?", (character[0],))
+    current_gp = cursor.fetchone()[0]
+    
+    if current_gp < item_details['price']:
+        await interaction.response.send_message(f"Not enough GP! You need {item_details['price']} GP but only have {current_gp} GP.")
+        conn.close()
+        return
+
+    # Subtract GP and add item to inventory
+    cursor.execute("UPDATE profiles SET gp = gp - ? WHERE character_id = ?", 
+                  (item_details['price'], character[0]))
+    
     cursor.execute("""
     INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
     VALUES (?, ?, ?, ?, ?)
@@ -631,6 +648,52 @@ class SecondChanceView(discord.ui.View):
             WHERE character_name = ?
             """, (new_hp, self.character_name))
             conn.commit()
+
+
+
+@client.tree.command(name="sell_item", description="Sell an item from your inventory")
+async def sell_item(interaction: discord.Interaction, character_name: str, item_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    # Get item from inventory
+    cursor.execute("""
+    SELECT id, value FROM inventory
+    WHERE character_id = ? AND item_name = ?
+    LIMIT 1
+    """, (character[0], item_name))
+    item = cursor.fetchone()
+
+    if not item:
+        await interaction.response.send_message(f"{character_name} doesn't have a {item_name}!")
+        conn.close()
+        return
+
+    # Add half the value as GP (selling gives 50% of buy price)
+    sell_value = item[1] // 2
+    cursor.execute("UPDATE profiles SET gp = gp + ? WHERE character_id = ?", 
+                  (sell_value, character[0]))
+
+    # Remove the item
+    cursor.execute("DELETE FROM inventory WHERE id = ?", (item[0],))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"Sold {item_name} for {sell_value} GP!")
+
 
             embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
