@@ -314,26 +314,39 @@ async def shop(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="buy", description="Buy an item from the shop")
-async def buy(interaction: discord.Interaction, item: str):
-    user_id = str(interaction.user.id)
-    if user_id not in client.characters:
-        await interaction.response.send_message("Create a character first!")
+async def buy(interaction: discord.Interaction, character_name: str, item: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
         return
 
     if item not in client.shop_items:
         await interaction.response.send_message("Item not available!")
+        conn.close()
         return
 
-    char = client.characters[user_id]
-    price = client.shop_items[item]
+    item_details = client.shop_items[item]
+    
+    # Add item to inventory
+    cursor.execute("""
+    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+    VALUES (?, ?, ?, ?, ?)
+    """, (character[0], item, item_details['description'], item_details['price'], item_details['hp_effect']))
 
-    if char.coins < price:
-        await interaction.response.send_message("Not enough coins!")
-        return
+    conn.commit()
+    conn.close()
 
-    char.coins -= price
-    char.inventory["consumables"].append(item)
-    await interaction.response.send_message(f"Bought {item} for {price} coins!")
+    await interaction.response.send_message(f"Bought {item} for {item_details['price']} GP!")
 
 @client.tree.command(name="loot", description="Search for loot in your current area")
 async def loot(interaction: discord.Interaction, character_name: str):
