@@ -400,6 +400,21 @@ async def loot(interaction: discord.Interaction, character_name: str):
             if loot[3] != 0:
                 embed.add_field(name="HP Effect", value=str(loot[3]))
 
+            # Award XP for finding loot (20-40 XP based on location)
+            location_xp = {
+                "High School": 20,
+                "City": 25,
+                "Sewers": 30,
+                "Forest": 30,
+                "Abandoned Facility": 40
+            }
+            xp_gain = location_xp.get(current_location, 20)
+            leveled_up = update_character_xp(character_name, xp_gain)
+            
+            if leveled_up:
+                embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
+            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
+            
             await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message(f"{character_name} found nothing of value...")
@@ -498,7 +513,22 @@ class EncounterView(discord.ui.View):
                     if loot[3] != 0:
                         embed.add_field(name="HP Effect", value=str(loot[3]))
 
+            # Award XP for victory (50-100 XP based on location difficulty)
+            location_xp = {
+                "High School": 50,
+                "City": 65,
+                "Sewers": 80,
+                "Forest": 80,
+                "Abandoned Facility": 100
+            }
+            xp_gain = location_xp.get(location, 50)
+            leveled_up = update_character_xp(self.character_name, xp_gain)
+            
             embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
+            if leveled_up:
+                embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
+            
             conn.close()
             await interaction.response.send_message(embed=embed)
             self.stop()

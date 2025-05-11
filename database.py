@@ -17,6 +17,7 @@ def setup_database():
         character_name TEXT,
         hp INTEGER,
         level INTEGER DEFAULT 0,
+        xp INTEGER DEFAULT 0,
         weapon TEXT,
         active_location TEXT
     )
@@ -146,3 +147,38 @@ def remove_item_from_inventory(item_id):
     """, (item_id,))
     conn.commit()
     conn.close()
+
+def update_character_xp(character_name: str, xp_gain: int):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Get current XP and level
+    cursor.execute("""
+    SELECT level, xp FROM profiles 
+    WHERE character_name = ?
+    """, (character_name,))
+    current_level, current_xp = cursor.fetchone()
+
+    # Calculate XP needed for next level (increases exponentially)
+    xp_for_next_level = 100 * (current_level + 1) * 1.5
+
+    # Add new XP
+    new_xp = current_xp + xp_gain
+    new_level = current_level
+
+    # Check if leveled up
+    while new_xp >= xp_for_next_level and new_level < 20:
+        new_level += 1
+        new_xp -= xp_for_next_level
+        xp_for_next_level = 100 * (new_level + 1) * 1.5
+
+    # Update character
+    cursor.execute("""
+    UPDATE profiles 
+    SET level = ?, xp = ?
+    WHERE character_name = ?
+    """, (new_level, new_xp, character_name))
+
+    conn.commit()
+    conn.close()
+    return new_level > current_level
