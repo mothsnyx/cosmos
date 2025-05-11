@@ -8,7 +8,7 @@ from typing import List, Dict
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from database import setup_database, connect
+from database import setup_database, connect, update_character_xp
 from dotenv import load_dotenv
 
 load_dotenv()
