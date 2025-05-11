@@ -514,6 +514,11 @@ class EncounterView(discord.ui.View):
 
             embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
+            
+            if new_hp == 0:
+                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
+            elif new_hp <= 10:
+                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
 
             # Create new view for second chance
             view = SecondChanceView(self.character_name, self.enemy_name, location)
@@ -581,6 +586,11 @@ class SecondChanceView(discord.ui.View):
 
             embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
+
+            if new_hp == 0:
+                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
+            elif new_hp <= 10:
+                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
 
         await interaction.response.send_message(embed=embed)
         conn.close()
