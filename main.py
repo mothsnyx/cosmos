@@ -452,9 +452,9 @@ class EncounterView(discord.ui.View):
         char_data = cursor.fetchone()
         location, current_hp = char_data
 
-        # First roll
-        player_roll = random.randint(1, 20)
-        enemy_roll = random.randint(1, 20)
+        # First roll with reduced range
+        player_roll = random.randint(1, 10)
+        enemy_roll = random.randint(1, 10)
 
         embed = discord.Embed(title="First Combat Roll", color=discord.Color.blue())
         embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
@@ -565,8 +565,8 @@ class SecondChanceView(discord.ui.View):
         """, (self.character_name,))
         current_hp = cursor.fetchone()[0]
 
-        player_roll = random.randint(1, 20)
-        enemy_roll = random.randint(1, 20)
+        player_roll = random.randint(1, 10)
+        enemy_roll = random.randint(1, 10)
 
         embed = discord.Embed(title="Second Combat Roll", color=discord.Color.blue())
         embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
