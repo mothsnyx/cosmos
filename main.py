@@ -538,13 +538,13 @@ class EncounterView(discord.ui.View):
             return
         # Calculate damage based on roll difference
         if player_roll > enemy_roll:
-            damage_to_enemy = (player_roll - enemy_roll) * 10
-            self.enemy_hp -= damage_to_enemy
-            embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
-            embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
-            
-            if self.enemy_hp <= 0:
-                # Handle victory
+                damage_to_enemy = (player_roll - enemy_roll) * 10
+                self.enemy_hp -= damage_to_enemy
+                embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
+                embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
+                
+                if self.enemy_hp <= 0:
+                    embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
                 conn = connect()
                 cursor = conn.cursor()
             cursor.execute("""
@@ -608,14 +608,16 @@ class EncounterView(discord.ui.View):
             embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
 
-            if new_hp == 0:
-                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
+            if new_hp <= 0:
+                embed.description = f"💀 {self.character_name} was killed by the {self.enemy_name}!"
+                await interaction.response.send_message(embed=embed)
             elif new_hp <= 10:
                 embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
-
-            # Create new view for second chance
-            view = SecondChanceView(self.character_name, self.enemy_name, location)
-            await interaction.response.send_message(embed=embed, view=view)
+                view = SecondChanceView(self.character_name, self.enemy_name, location)
+                await interaction.response.send_message(embed=embed, view=view)
+            else:
+                view = SecondChanceView(self.character_name, self.enemy_name, location)
+                await interaction.response.send_message(embed=embed, view=view)
             conn.close()
             self.stop()
 
