@@ -399,7 +399,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
                 description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
                 color=discord.Color.red()
             )
-            view = EncounterView(character_name, enemy[0], enemy[1])
+            view = EncounterView(character_name, enemy[0], enemy[1], current_location)
             await interaction.response.send_message(embed=embed, view=view)
             conn.close()
             return
@@ -460,11 +460,12 @@ async def loot(interaction: discord.Interaction, character_name: str):
 active_encounters = {}
 
 class EncounterView(discord.ui.View):
-    def __init__(self, character_name: str, enemy_name: str, enemy_description: str):
+    def __init__(self, character_name: str, enemy_name: str, enemy_description: str, location: str):
         super().__init__()
         self.character_name = character_name
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
+        self.location = location
         
         # Get character level and calculate enemy HP
         conn = connect()
