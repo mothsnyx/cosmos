@@ -490,17 +490,22 @@ class EncounterView(discord.ui.View):
         self.max_enemy_hp = self.enemy_hp
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
+        # Adjusted damage ranges (player deals more damage, enemies deal less)
         damage_ranges = {
-            "High School": (2, 20),
-            "City": (10, 30),
-            "Sewers": (30, 50),
-            "Forest": (15, 30),
-            "Abandoned Facility": (45, 65)
+            "High School": (5, 15),  # Easier starting area
+            "City": (8, 25),         # Moderate challenge
+            "Sewers": (15, 35),      # Harder but not unfair
+            "Forest": (15, 35),      # Similar to sewers
+            "Abandoned Facility": (25, 45)  # Tough but manageable
         }
-        min_dmg, max_dmg = damage_ranges.get(location, (2, 20))
-        damage = random.randint(min_dmg, max_dmg)
-        if is_second_roll:
-            damage *= 2
+        min_dmg, max_dmg = damage_ranges.get(location, (5, 15))
+
+        # Player deals more damage, enemies deal less
+        if is_second_roll:  # Enemy damage
+            damage = random.randint(min_dmg // 2, max_dmg // 2)
+        else:  # Player damage
+            damage = random.randint(min_dmg * 2, max_dmg * 2)
+
         return damage
 
     @discord.ui.button(label="Flee", style=discord.ButtonStyle.secondary)
@@ -576,14 +581,14 @@ class EncounterView(discord.ui.View):
                         description=f"{self.character_name} defeated the {self.enemy_name}!",
                         color=discord.Color.green()
                     )
-                    
+
                     # Add XP information
                     victory_embed.add_field(
                         name="💫 Experience Gained",
                         value=f"+{xp_gain} XP",
                         inline=False
                     )
-                    
+
                     if leveled_up:
                         victory_embed.add_field(
                             name="🎉 LEVEL UP!",
@@ -663,14 +668,14 @@ class EncounterView(discord.ui.View):
                         description=f"{self.character_name} defeated the {self.enemy_name}!",
                         color=discord.Color.green()
                     )
-                    
+
                     # Add XP information
                     victory_embed.add_field(
                         name="💫 Experience Gained",
                         value=f"+{xp_gain} XP",
                         inline=False
                     )
-                    
+
                     # Add level up notification if applicable
                     if leveled_up:
                         victory_embed.add_field(
@@ -678,7 +683,7 @@ class EncounterView(discord.ui.View):
                             value="You've grown stronger!",
                             inline=False
                         )
-                    
+
                     # Add loot information if found
                     if loot:
                         loot_text = f"**{loot[0]}**\n"
@@ -690,7 +695,7 @@ class EncounterView(discord.ui.View):
                             value=loot_text,
                             inline=False
                         )
-                    
+
                     conn.close()
                     await interaction.response.send_message(embed=victory_embed)
                     return self.stop()
@@ -1067,4 +1072,3 @@ finally:
     # Cleanup
     if not client.is_closed():
         client.close()
-
