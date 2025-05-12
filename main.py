@@ -551,15 +551,15 @@ class EncounterView(discord.ui.View):
                     embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
                     await interaction.response.send_message(embed=embed)
                     return self.stop()
-                else:
-                    await interaction.response.send_message(embed=embed, view=self)
-                    conn = connect()
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT active_location FROM profiles
-                        WHERE character_name = ?
-                        """, (self.character_name,))
-                    location = cursor.fetchone()[0]
+
+                await interaction.response.send_message(embed=embed, view=self)
+                conn = connect()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT active_location FROM profiles
+                    WHERE character_name = ?
+                    """, (self.character_name,))
+                location = cursor.fetchone()[0]
 
                     # 70% chance to find loot
                     if random.random() < 0.7:
