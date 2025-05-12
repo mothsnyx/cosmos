@@ -544,36 +544,36 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
                 
                 if self.enemy_hp <= 0:
-                embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
-                conn = connect()
-                cursor = conn.cursor()
-                cursor.execute("""
-            SELECT active_location FROM profiles
-            WHERE character_name = ?
-            """, (self.character_name,))
-            location = cursor.fetchone()[0]
+                    embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
+                    conn = connect()
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT active_location FROM profiles
+                        WHERE character_name = ?
+                        """, (self.character_name,))
+                    location = cursor.fetchone()[0]
 
             # 70% chance to find loot
-            if random.random() < 0.7:
-                cursor.execute("""
-                SELECT name, description, value, hp_effect FROM loot_items
-                WHERE location = ?
-                ORDER BY RANDOM() LIMIT 1
-                """, (location,))
-                loot = cursor.fetchone()
+                    if random.random() < 0.7:
+                        cursor.execute("""
+                            SELECT name, description, value, hp_effect FROM loot_items
+                            WHERE location = ?
+                            ORDER BY RANDOM() LIMIT 1
+                            """, (location,))
+                        loot = cursor.fetchone()
 
-                if loot:
-                    cursor.execute("""
-                    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-                    SELECT character_id, ?, ?, ?, ?
-                    FROM profiles
-                    WHERE character_name = ?
-                    """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
-                    conn.commit()
+                        if loot:
+                            cursor.execute("""
+                                INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                                SELECT character_id, ?, ?, ?, ?
+                                FROM profiles
+                                WHERE character_name = ?
+                                """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                            conn.commit()
 
-                    embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
-                    if loot[3] != 0:
-                        embed.add_field(name="HP Effect", value=str(loot[3]))
+                            embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
+                            if loot[3] != 0:
+                                embed.add_field(name="HP Effect", value=str(loot[3]))
 
             # Award XP for victory (50-100 XP based on location difficulty)
             location_xp = {
