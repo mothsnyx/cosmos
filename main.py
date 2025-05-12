@@ -465,6 +465,19 @@ class EncounterView(discord.ui.View):
         self.character_name = character_name
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
+        
+        # Get character level and calculate enemy HP
+        conn = connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT level, hp FROM profiles WHERE character_name = ?", (character_name,))
+        char_data = cursor.fetchone()
+        self.char_level = char_data[0]
+        self.char_hp = char_data[1]
+        conn.close()
+        
+        # Enemy HP scales with level (base 50 HP + 10 per level)
+        self.enemy_hp = 50 + (self.char_level * 10)
+        self.max_enemy_hp = self.enemy_hp
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
         damage_ranges = {
@@ -498,7 +511,7 @@ class EncounterView(discord.ui.View):
         WHERE character_name = ?
         """, (self.character_name,))
         char_data = cursor.fetchone()
-        location, current_hp = char_data
+        location, self.char_hp = char_data
 
         # First roll with reduced range
         player_roll = random.randint(1, 10)
@@ -514,10 +527,17 @@ class EncounterView(discord.ui.View):
             conn.close()
             self.stop()
             return
-        elif player_roll > enemy_roll:
-            # Handle victory
-            conn = connect()
-            cursor = conn.cursor()
+        el# Calculate damage based on roll difference
+        if player_roll > enemy_roll:
+            damage_to_enemy = (player_roll - enemy_roll) * 10
+            self.enemy_hp -= damage_to_enemy
+            embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
+            embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
+            
+            if self.enemy_hp <= 0:
+                # Handle victory
+                conn = connect()
+                cursor = conn.cursor()
             cursor.execute("""
             SELECT active_location FROM profiles
             WHERE character_name = ?
@@ -567,8 +587,8 @@ class EncounterView(discord.ui.View):
             self.stop()
         else:
             # Calculate and apply damage
-            damage = await self.calculate_damage(location)
-            new_hp = max(0, current_hp - damage)
+            damage = (enemy_roll - player_roll) * 8
+            self.char_hp = max(0, self.char_hp - damage)
             cursor.execute("""
             UPDATE profiles
             SET hp = ?
