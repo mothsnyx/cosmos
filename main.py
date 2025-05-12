@@ -592,8 +592,8 @@ class EncounterView(discord.ui.View):
                         embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
 
             conn.close()
-            await interaction.response.send_message(embed=embed)
-            self.stop()
+                await interaction.response.send_message(embed=embed)
+                self.stop()
         else:
             # Calculate and apply damage
             damage = (enemy_roll - player_roll) * 8
