@@ -577,13 +577,13 @@ class EncounterView(discord.ui.View):
 
                     # Award XP for victory (50-100 XP based on location difficulty)
                     location_xp = {
-                "High School": 50,
-                "City": 65,
-                "Sewers": 80,
-                "Forest": 80,
-                "Abandoned Facility": 100
-            }
-            xp_gain = location_xp.get(location, 50)
+                        "High School": 50,
+                        "City": 65,
+                        "Sewers": 80,
+                        "Forest": 80,
+                        "Abandoned Facility": 100
+                    }
+                    xp_gain = location_xp.get(location, 50)
                     leveled_up = update_character_xp(self.character_name, xp_gain)
 
                     embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
