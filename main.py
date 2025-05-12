@@ -532,10 +532,12 @@ class EncounterView(discord.ui.View):
         embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
         if player_roll == enemy_roll:
-            embed.description = f"The {self.enemy_name} changed its mind and fled!"
-            await interaction.response.send_message(embed=embed)
+            embed.description = f"Both {self.character_name} and {self.enemy_name} matched each other's moves! Combat continues!"
+            embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
+            embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
+            embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
+            await interaction.response.send_message(embed=embed, view=self)
             conn.close()
-            self.stop()
             return
         # Calculate damage based on roll difference
         if player_roll > enemy_roll:
