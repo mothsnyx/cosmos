@@ -571,12 +571,12 @@ class EncounterView(discord.ui.View):
                     loot = cursor.fetchone()
 
                     if loot:
-                            cursor.execute("""
-                            INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-                            SELECT character_id, ?, ?, ?, ?
-                            FROM profiles
-                            WHERE character_name = ?
-                            """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                        cursor.execute("""
+                        INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                        SELECT character_id, ?, ?, ?, ?
+                        FROM profiles
+                        WHERE character_name = ?
+                        """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
                         conn.commit()
 
                         embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
