@@ -527,7 +527,7 @@ class EncounterView(discord.ui.View):
             conn.close()
             self.stop()
             return
-        el# Calculate damage based on roll difference
+        # Calculate damage based on roll difference
         if player_roll > enemy_roll:
             damage_to_enemy = (player_roll - enemy_roll) * 10
             self.enemy_hp -= damage_to_enemy
