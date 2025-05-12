@@ -545,8 +545,11 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
 
+                await interaction.response.send_message(embed=embed)
+                
                 if self.enemy_hp <= 0:
-                    embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
+                    embed = discord.Embed(title="Victory!", color=discord.Color.green())
+                    embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
                     conn = connect()
                     cursor = conn.cursor()
                     cursor.execute("""
