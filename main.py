@@ -579,14 +579,8 @@ class EncounterView(discord.ui.View):
                     victory_embed = discord.Embed(
                         title="🏆 Combat Victory!",
                         description=f"{self.character_name} defeated the {self.enemy_name}!",
+                        embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
                         color=discord.Color.green()
-                    )
-
-                    # Add XP information
-                    victory_embed.add_field(
-                        name="💫 Experience Gained",
-                        value=f"+{xp_gain} XP",
-                        inline=False
                     )
 
                     if leveled_up:
