@@ -553,7 +553,7 @@ class EncounterView(discord.ui.View):
                         """, (self.character_name,))
                     location = cursor.fetchone()[0]
 
-            # 70% chance to find loot
+                    # 70% chance to find loot
                     if random.random() < 0.7:
                         cursor.execute("""
                             SELECT name, description, value, hp_effect FROM loot_items
@@ -575,8 +575,8 @@ class EncounterView(discord.ui.View):
                             if loot[3] != 0:
                                 embed.add_field(name="HP Effect", value=str(loot[3]))
 
-            # Award XP for victory (50-100 XP based on location difficulty)
-            location_xp = {
+                    # Award XP for victory (50-100 XP based on location difficulty)
+                    location_xp = {
                 "High School": 50,
                 "City": 65,
                 "Sewers": 80,
