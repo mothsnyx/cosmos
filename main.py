@@ -594,13 +594,42 @@ class EncounterView(discord.ui.View):
                     xp_gain = location_xp.get(location, 50)
                     leveled_up = update_character_xp(self.character_name, xp_gain)
 
-                    embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
-                    embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
+                    # Create a victory embed
+                    victory_embed = discord.Embed(
+                        title="🏆 Combat Victory!",
+                        description=f"{self.character_name} defeated the {self.enemy_name}!",
+                        color=discord.Color.green()
+                    )
+                    
+                    # Add XP information
+                    victory_embed.add_field(
+                        name="💫 Experience Gained",
+                        value=f"+{xp_gain} XP",
+                        inline=False
+                    )
+                    
+                    # Add level up notification if applicable
                     if leveled_up:
-                        embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
-
+                        victory_embed.add_field(
+                            name="🎉 LEVEL UP!",
+                            value="You've grown stronger!",
+                            inline=False
+                        )
+                    
+                    # Add loot information if found
+                    if loot:
+                        loot_text = f"**{loot[0]}**\n"
+                        loot_text += f"Value: {loot[2]} GP"
+                        if loot[3] != 0:
+                            loot_text += f"\nHP Effect: {loot[3]}"
+                        victory_embed.add_field(
+                            name="🎁 Loot Acquired!",
+                            value=loot_text,
+                            inline=False
+                        )
+                    
                     conn.close()
-                    await interaction.response.send_message(embed=embed)
+                    await interaction.response.send_message(embed=victory_embed)
                     return self.stop()
                 else:
                     embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
