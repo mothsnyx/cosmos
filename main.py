@@ -596,8 +596,8 @@ class EncounterView(discord.ui.View):
                     await interaction.response.send_message(embed=embed)
                     return self.stop()
         else:
-            # Calculate and apply damage
-            damage = (enemy_roll - player_roll) * 8
+            # Calculate and apply damage (with fixed multiplier)
+            damage = (enemy_roll - player_roll) * 4  # Reduced multiplier for fairer combat
             new_hp = max(0, self.char_hp - damage)
             cursor.execute("""
             UPDATE profiles
@@ -607,7 +607,8 @@ class EncounterView(discord.ui.View):
             conn.commit()
 
             embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
-            embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
+            embed.add_field(name="Your HP", value=f"{new_hp}/100", inline=True)
+            embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
 
             if new_hp <= 0:
                 embed.description = f"💀 {self.character_name} was killed by the {self.enemy_name}!"
