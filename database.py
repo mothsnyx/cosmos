@@ -187,12 +187,12 @@ def update_character_xp(character_name: str, xp_gain: int):
     conn = connect()
     cursor = conn.cursor()
 
-    # Get current XP and level
+    # Get current XP, level and HP
     cursor.execute("""
-    SELECT level, xp FROM profiles 
+    SELECT level, xp, hp FROM profiles 
     WHERE character_name = ?
     """, (character_name,))
-    current_level, current_xp = cursor.fetchone()
+    current_level, current_xp, current_hp = cursor.fetchone()
 
     # Calculate XP needed for next level (increases exponentially)
     xp_for_next_level = 100 * (current_level + 1) * 1.5
@@ -200,19 +200,21 @@ def update_character_xp(character_name: str, xp_gain: int):
     # Add new XP
     new_xp = current_xp + xp_gain
     new_level = current_level
+    new_hp = current_hp
 
     # Check if leveled up
     while new_xp >= xp_for_next_level and new_level < 20:
         new_level += 1
         new_xp -= xp_for_next_level
         xp_for_next_level = 100 * (new_level + 1) * 1.5
+        new_hp = min(100 + (new_level * 10), new_hp + 10)  # Increase max HP by 10 per level
 
     # Update character
     cursor.execute("""
     UPDATE profiles 
-    SET level = ?, xp = ?
+    SET level = ?, xp = ?, hp = ?
     WHERE character_name = ?
-    """, (new_level, new_xp, character_name))
+    """, (new_level, new_xp, new_hp, character_name))
 
     conn.commit()
     conn.close()
