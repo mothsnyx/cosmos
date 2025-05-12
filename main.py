@@ -1,7 +1,3 @@
-Adjusted the damage ranges in the `damage_ranges` dictionary to increase combat speed in lower and medium level areas.
-```
-
-```python
 import discord
 from discord import app_commands
 import random
@@ -495,8 +491,8 @@ class EncounterView(discord.ui.View):
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
         damage_ranges = {
-            "High School": (5, 25),
-            "City": (15, 35),
+            "High School": (2, 20),
+            "City": (10, 30),
             "Sewers": (30, 50),
             "Forest": (15, 30),
             "Abandoned Facility": (45, 65)
@@ -604,14 +600,14 @@ class EncounterView(discord.ui.View):
                         description=f"{self.character_name} defeated the {self.enemy_name}!",
                         color=discord.Color.green()
                     )
-
+                    
                     # Add XP information
                     victory_embed.add_field(
                         name="💫 Experience Gained",
                         value=f"+{xp_gain} XP",
                         inline=False
                     )
-
+                    
                     # Add level up notification if applicable
                     if leveled_up:
                         victory_embed.add_field(
@@ -619,7 +615,7 @@ class EncounterView(discord.ui.View):
                             value="You've grown stronger!",
                             inline=False
                         )
-
+                    
                     # Add loot information if found
                     if loot:
                         loot_text = f"**{loot[0]}**\n"
@@ -631,7 +627,7 @@ class EncounterView(discord.ui.View):
                             value=loot_text,
                             inline=False
                         )
-
+                    
                     conn.close()
                     await interaction.response.send_message(embed=victory_embed)
                     return self.stop()
@@ -673,8 +669,8 @@ class SecondChanceView(discord.ui.View):
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
         damage_ranges = {
-            "High School": (5, 25),
-            "City": (15, 35),
+            "High School": (2, 20),
+            "City": (10, 30),
             "Sewers": (30, 50),
             "Forest": (15, 30),
             "Abandoned Facility": (45, 65)
@@ -767,4 +763,245 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
 
     # Add half the value as GP (selling gives 50% of buy price)
     sell_value = item[1] // 2
-    cursor.execute("UPDATE
+    cursor.execute("UPDATE profiles SET gp = gp + ? WHERE character_id = ?", 
+                  (sell_value, character[0]))
+
+    # Remove the item
+    cursor.execute("DELETE FROM inventory WHERE id = ?", (item[0],))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"Sold {item_name} for {sell_value} GP!")
+
+
+
+@client.tree.command(name="weather", description="Check the current weather")
+async def weather(interaction: discord.Interaction):
+    if random.random() < 0.3:  # 30% chance to change weather
+        client.current_weather = random.choice(client.weather)
+    await interaction.response.send_message(f"Current weather: {client.current_weather}")
+
+# Register all commands at startup
+@client.event
+async def setup_hook():
+    try:
+        await client.tree.sync()
+        print("Commands synced successfully")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
+
+@client.tree.command(name="remove_item", description="Remove an item from your character's inventory")
+async def remove_item(interaction: discord.Interaction, character_name: str, item_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    # Check if item exists in inventory
+    cursor.execute("""
+    SELECT id FROM inventory
+    WHERE character_id = ? AND item_name = ?
+    LIMIT 1
+    """, (character[0], item_name))
+    item = cursor.fetchone()
+
+    if not item:
+        await interaction.response.send_message(f"{character_name} doesn't have a {item_name}!")
+        conn.close()
+        return
+
+    # Remove the item
+    cursor.execute("""
+    DELETE FROM inventory
+    WHERE id = ?
+    """, (item[0],))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"Removed {item_name} from {character_name}'s inventory.")
+
+@client.tree.command(name="heal", description="Use a healing item from your inventory")
+async def heal(interaction: discord.Interaction, character_name: str, item_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id, hp FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    character_id, current_hp = character
+
+    # Get the item with hp_effect > 0
+    cursor.execute("""
+    SELECT id, item_name, hp_effect FROM inventory
+    WHERE character_id = ? AND item_name = ? AND hp_effect > 0
+    LIMIT 1
+    """, (character_id, item_name))
+    item = cursor.fetchone()
+
+    if not item:
+        await interaction.response.send_message(f"No healing item named '{item_name}' found in inventory!")
+        conn.close()
+        return
+
+    item_id, item_name, hp_effect = item
+    new_hp = min(100, current_hp + hp_effect)  # Cap HP at 100
+
+    # Update character's HP
+    cursor.execute("""
+    UPDATE profiles
+    SET hp = ?
+    WHERE character_id = ?
+    """, (new_hp, character_id))
+
+    # Remove the used item from inventory
+    cursor.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
+
+    conn.commit()
+    conn.close()
+
+    embed = discord.Embed(title="Item Used", color=discord.Color.green())
+    embed.add_field(name="Item", value=item_name)
+    embed.add_field(name="Healing", value=f"+{hp_effect} HP")
+    embed.add_field(name="New HP", value=f"{new_hp}/100", inline=False)
+
+    await interaction.response.send_message(embed=embed)
+
+@client.tree.command(name="fight", description="Fight a specific enemy with your character")
+async def fight(interaction: discord.Interaction, character_name: str, enemy_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT active_location FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    if not character[0]:
+        await interaction.response.send_message(f"{character_name} is not in any location!")
+        conn.close()
+        return
+
+    # Get enemy from current location
+    cursor.execute("""
+    SELECT name, description FROM enemies
+    WHERE location = ? AND name LIKE ?
+    """, (character[0], f"%{enemy_name}%"))
+    enemy = cursor.fetchone()
+    conn.close()
+
+    if not enemy:
+        await interaction.response.send_message(f"No enemy named '{enemy_name}' found in {character[0]}!")
+        return
+
+    embed = discord.Embed(
+        title="Enemy Encounter", 
+        description=f"{character_name} challenged {enemy[0]}!\n{enemy[1]}", 
+        color=discord.Color.red()
+    )
+    view = EncounterView(character_name, enemy[0], enemy[1], character[0])
+    await interaction.response.send_message(embed=embed, view=view)
+
+
+
+@client.tree.command(name="add_hp", description="Add HP to your character (maximum 100)")
+async def add_hp(interaction: discord.Interaction, character_name: str, amount: int):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id, hp FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    character_id, current_hp = character
+    new_hp = min(100, current_hp + amount)  # Cap HP at 100
+
+    # Update character's HP
+    cursor.execute("""
+    UPDATE profiles
+    SET hp = ?
+    WHERE character_id = ?
+    """, (new_hp, character_id))
+
+    conn.commit()
+    conn.close()
+
+    embed = discord.Embed(title="HP Added", color=discord.Color.green())
+    embed.add_field(name="Added", value=f"+{amount} HP")
+    embed.add_field(name="New HP", value=f"{new_hp}/100")
+    await interaction.response.send_message(embed=embed)
+
+@client.tree.command(name="set_level", description="Manually set your character's level")
+async def set_level(interaction: discord.Interaction, character_name: str, level: int):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    # Update character's level
+    cursor.execute("""
+    UPDATE profiles
+    SET level = ?
+    WHERE character_id = ?
+    """, (level, character[0]))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"{character_name}'s level has been set to {level}.")
+
+try:
+    client.run(os.getenv('DISCORD_TOKEN'))
+except KeyboardInterrupt:
+    # Graceful shutdown
+    logger.info("Bot is shutting down...")
+finally:
+    # Cleanup
+    if not client.is_closed():
+        client.close()
+
