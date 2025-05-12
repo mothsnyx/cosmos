@@ -891,6 +891,41 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     view = EncounterView(character_name, enemy[0], enemy[1])
     await interaction.response.send_message(embed=embed, view=view)
 
+@client.tree.command(name="add_hp", description="Add HP to your character (maximum 100)")
+async def add_hp(interaction: discord.Interaction, character_name: str, amount: int):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id, hp FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    character_id, current_hp = character
+    new_hp = min(100, current_hp + amount)  # Cap HP at 100
+
+    # Update character's HP
+    cursor.execute("""
+    UPDATE profiles
+    SET hp = ?
+    WHERE character_id = ?
+    """, (new_hp, character_id))
+
+    conn.commit()
+    conn.close()
+
+    embed = discord.Embed(title="HP Added", color=discord.Color.green())
+    embed.add_field(name="Added", value=f"+{amount} HP")
+    embed.add_field(name="New HP", value=f"{new_hp}/100")
+    await interaction.response.send_message(embed=embed)
+
 @client.tree.command(name="set_level", description="Manually set your character's level")
 async def set_level(interaction: discord.Interaction, character_name: str, level: int):
     conn = connect()
