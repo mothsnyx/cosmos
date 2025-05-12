@@ -584,12 +584,12 @@ class EncounterView(discord.ui.View):
                 "Abandoned Facility": 100
             }
             xp_gain = location_xp.get(location, 50)
-            leveled_up = update_character_xp(self.character_name, xp_gain)
+                    leveled_up = update_character_xp(self.character_name, xp_gain)
 
-            embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
-            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
-            if leveled_up:
-                embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
+                    embed.description = f"🏆 Victory! {self.character_name} defeated the {self.enemy_name}!"
+                    embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
+                    if leveled_up:
+                        embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
 
             conn.close()
             await interaction.response.send_message(embed=embed)
