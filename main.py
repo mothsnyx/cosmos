@@ -544,10 +544,10 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
                 
                 if self.enemy_hp <= 0:
-                    embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
+                embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
                 conn = connect()
                 cursor = conn.cursor()
-            cursor.execute("""
+                cursor.execute("""
             SELECT active_location FROM profiles
             WHERE character_name = ?
             """, (self.character_name,))
