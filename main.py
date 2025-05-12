@@ -475,8 +475,16 @@ class EncounterView(discord.ui.View):
         self.char_hp = char_data[1]
         conn.close()
         
-        # Enemy HP scales with level (base 50 HP + 10 per level)
-        self.enemy_hp = 50 + (self.char_level * 10)
+        # Enemy HP scales with location
+        location_hp = {
+            "High School": (30, 50),
+            "City": (50, 80),
+            "Sewers": (80, 120),
+            "Forest": (80, 120),
+            "Abandoned Facility": (120, 150)
+        }
+        min_hp, max_hp = location_hp.get(location, (30, 50))
+        self.enemy_hp = random.randint(min_hp, max_hp)
         self.max_enemy_hp = self.enemy_hp
 
     async def calculate_damage(self, location: str, is_second_roll: bool = False) -> int:
@@ -588,7 +596,7 @@ class EncounterView(discord.ui.View):
         else:
             # Calculate and apply damage
             damage = (enemy_roll - player_roll) * 8
-            self.char_hp = max(0, self.char_hp - damage)
+            new_hp = max(0, self.char_hp - damage)
             cursor.execute("""
             UPDATE profiles
             SET hp = ?
