@@ -523,11 +523,11 @@ class EncounterView(discord.ui.View):
         char_data = cursor.fetchone()
         location, self.char_hp = char_data
 
-        # First roll with reduced range
-        player_roll = random.randint(1, 10)
-        enemy_roll = random.randint(1, 10)
+        # Combat roll with full range
+        player_roll = random.randint(1, 20)
+        enemy_roll = random.randint(1, 20)
 
-        embed = discord.Embed(title="First Combat Roll", color=discord.Color.blue())
+        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
         embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
         embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
@@ -545,7 +545,9 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
                 embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
-
+                
+                await interaction.response.send_message(embed=embed, view=self)
+                
                 if self.enemy_hp <= 0:
                     embed = discord.Embed(title="Victory!", color=discord.Color.green())
                     embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
