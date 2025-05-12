@@ -512,17 +512,16 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        while True:
-            conn = connect()
-            cursor = conn.cursor()
+        conn = connect()
+        cursor = conn.cursor()
 
-            # Get character's location and current HP
-            cursor.execute("""
-            SELECT active_location, hp FROM profiles
-            WHERE character_name = ?
-            """, (self.character_name,))
-            char_data = cursor.fetchone()
-            location, self.char_hp = char_data
+        # Get character's location and current HP
+        cursor.execute("""
+        SELECT active_location, hp FROM profiles
+        WHERE character_name = ?
+        """, (self.character_name,))
+        char_data = cursor.fetchone()
+        location, self.char_hp = char_data
 
         # First roll with reduced range
         player_roll = random.randint(1, 10)
