@@ -901,6 +901,51 @@ async def encounter(interaction: discord.Interaction, character_name: str):
     view = EncounterView(character_name, enemy[0], enemy[1])
     await interaction.response.send_message(embed=embed, view=view)
 
+
+@client.tree.command(name="fight", description="Fight a specific enemy with your character")
+async def fight(interaction: discord.Interaction, character_name: str, enemy_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT active_location FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("Character not found!")
+        conn.close()
+        return
+
+    if not character[0]:
+        await interaction.response.send_message(f"{character_name} is not in any location!")
+        conn.close()
+        return
+
+    # Get enemy from current location
+    cursor.execute("""
+    SELECT name, description FROM enemies
+    WHERE location = ? AND name LIKE ?
+    """, (character[0], f"%{enemy_name}%"))
+    enemy = cursor.fetchone()
+    conn.close()
+
+    if not enemy:
+        await interaction.response.send_message(f"No enemy named '{enemy_name}' found in {character[0]}!")
+        return
+
+    embed = discord.Embed(
+        title="Enemy Encounter", 
+        description=f"{character_name} challenged {enemy[0]}!\n{enemy[1]}", 
+        color=discord.Color.red()
+    )
+    view = EncounterView(character_name, enemy[0], enemy[1], character[0])
+    await interaction.response.send_message(embed=embed, view=view)
+
+
+
 @client.tree.command(name="add_hp", description="Add HP to your character (maximum 100)")
 async def add_hp(interaction: discord.Interaction, character_name: str, amount: int):
     conn = connect()
@@ -974,47 +1019,4 @@ finally:
     # Cleanup
     if not client.is_closed():
         client.close()
-
-
-@client.tree.command(name="fight", description="Fight a specific enemy with your character")
-async def fight(interaction: discord.Interaction, character_name: str, enemy_name: str):
-    conn = connect()
-    cursor = conn.cursor()
-
-    # Check if character exists and belongs to user
-    cursor.execute("""
-    SELECT active_location FROM profiles
-    WHERE user_id = ? AND character_name = ?
-    """, (interaction.user.id, character_name))
-    character = cursor.fetchone()
-
-    if not character:
-        await interaction.response.send_message("Character not found!")
-        conn.close()
-        return
-
-    if not character[0]:
-        await interaction.response.send_message(f"{character_name} is not in any location!")
-        conn.close()
-        return
-
-    # Get enemy from current location
-    cursor.execute("""
-    SELECT name, description FROM enemies
-    WHERE location = ? AND name LIKE ?
-    """, (character[0], f"%{enemy_name}%"))
-    enemy = cursor.fetchone()
-    conn.close()
-
-    if not enemy:
-        await interaction.response.send_message(f"No enemy named '{enemy_name}' found in {character[0]}!")
-        return
-
-    embed = discord.Embed(
-        title="Enemy Encounter", 
-        description=f"{character_name} challenged {enemy[0]}!\n{enemy[1]}", 
-        color=discord.Color.red()
-    )
-    view = EncounterView(character_name, enemy[0], enemy[1], character[0])
-    await interaction.response.send_message(embed=embed, view=view)
 
