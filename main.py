@@ -545,7 +545,7 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
                 embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
-                
+
                 if self.enemy_hp <= 0:
                     embed = discord.Embed(title="Victory!", color=discord.Color.green())
                     embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
@@ -774,7 +774,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
 
-    if notcharacter:
+    if not character:
         await interaction.response.send_message("Character not found!")
         conn.close()
         return
