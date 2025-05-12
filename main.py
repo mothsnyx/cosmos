@@ -466,6 +466,7 @@ class EncounterView(discord.ui.View):
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
         self.location = location
+        self.combat_round = 1
 
         # Get character level and calculate enemy HP
         conn = connect()
@@ -511,16 +512,17 @@ class EncounterView(discord.ui.View):
 
     @discord.ui.button(label="Fight", style=discord.ButtonStyle.danger)
     async def fight(self, interaction: discord.Interaction, button: discord.ui.Button):
-        conn = connect()
-        cursor = conn.cursor()
+        while True:
+            conn = connect()
+            cursor = conn.cursor()
 
-        # Get character's location and current HP
-        cursor.execute("""
-        SELECT active_location, hp FROM profiles
-        WHERE character_name = ?
-        """, (self.character_name,))
-        char_data = cursor.fetchone()
-        location, self.char_hp = char_data
+            # Get character's location and current HP
+            cursor.execute("""
+            SELECT active_location, hp FROM profiles
+            WHERE character_name = ?
+            """, (self.character_name,))
+            char_data = cursor.fetchone()
+            location, self.char_hp = char_data
 
         # First roll with reduced range
         player_roll = random.randint(1, 10)
@@ -593,7 +595,7 @@ class EncounterView(discord.ui.View):
 
                     conn.close()
                     await interaction.response.send_message(embed=embed)
-                    self.stop()
+                    return self.stop()
         else:
             # Calculate and apply damage
             damage = (enemy_roll - player_roll) * 8
@@ -611,15 +613,13 @@ class EncounterView(discord.ui.View):
             if new_hp <= 0:
                 embed.description = f"💀 {self.character_name} was killed by the {self.enemy_name}!"
                 await interaction.response.send_message(embed=embed)
-            elif new_hp <= 10:
-                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
-                view = SecondChanceView(self.character_name, self.enemy_name, location)
-                await interaction.response.send_message(embed=embed, view=view)
+                return self.stop()
             else:
-                view = SecondChanceView(self.character_name, self.enemy_name, location)
-                await interaction.response.send_message(embed=embed, view=view)
+                embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
+                if new_hp <= 10:
+                    embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
+                await interaction.response.send_message(embed=embed, view=self)
             conn.close()
-            self.stop()
 
 class SecondChanceView(discord.ui.View):
     def __init__(self, character_name: str, enemy_name: str, location: str):
