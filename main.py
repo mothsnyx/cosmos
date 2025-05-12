@@ -477,13 +477,13 @@ class EncounterView(discord.ui.View):
         self.char_hp = char_data[1]
         conn.close()
 
-        # Enemy HP scales with location
+        # Enemy HP scales with location (reduced for lower levels)
         location_hp = {
-            "High School": (30, 50),
-            "City": (50, 80),
-            "Sewers": (80, 120),
-            "Forest": (80, 120),
-            "Abandoned Facility": (120, 150)
+            "High School": (20, 35),
+            "City": (35, 60),
+            "Sewers": (60, 100),
+            "Forest": (60, 100),
+            "Abandoned Facility": (100, 130)
         }
         min_hp, max_hp = location_hp.get(location, (30, 50))
         self.enemy_hp = random.randint(min_hp, max_hp)
@@ -549,9 +549,70 @@ class EncounterView(discord.ui.View):
                 embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
 
                 if self.enemy_hp <= 0:
-                    embed = discord.Embed(title="Victory!", color=discord.Color.green())
-                    embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
-                    await interaction.response.send_message(embed=embed)
+                    # Get location XP values
+                    location_xp = {
+                        "High School": 50,
+                        "City": 65,
+                        "Sewers": 80,
+                        "Forest": 80,
+                        "Abandoned Facility": 100
+                    }
+                    xp_gain = location_xp.get(self.location, 50)
+                    leveled_up = update_character_xp(self.character_name, xp_gain)
+
+                    # Check for loot
+                    conn = connect()
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT name, description, value, hp_effect FROM loot_items
+                        WHERE location = ?
+                        ORDER BY RANDOM() LIMIT 1
+                        """, (self.location,))
+                    loot = cursor.fetchone()
+
+                    # Create victory embed
+                    victory_embed = discord.Embed(
+                        title="🏆 Combat Victory!",
+                        description=f"{self.character_name} defeated the {self.enemy_name}!",
+                        color=discord.Color.green()
+                    )
+                    
+                    # Add XP information
+                    victory_embed.add_field(
+                        name="💫 Experience Gained",
+                        value=f"+{xp_gain} XP",
+                        inline=False
+                    )
+                    
+                    if leveled_up:
+                        victory_embed.add_field(
+                            name="🎉 LEVEL UP!",
+                            value="You've grown stronger!",
+                            inline=False
+                        )
+
+                    # Add loot if found
+                    if loot and random.random() < 0.7:  # 70% chance to get loot
+                        cursor.execute("""
+                        INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                        SELECT character_id, ?, ?, ?, ?
+                        FROM profiles
+                        WHERE character_name = ?
+                        """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                        conn.commit()
+
+                        loot_text = f"**{loot[0]}**\n"
+                        loot_text += f"Value: {loot[2]} GP"
+                        if loot[3] != 0:
+                            loot_text += f"\nHP Effect: {loot[3]}"
+                        victory_embed.add_field(
+                            name="🎁 Loot Acquired!",
+                            value=loot_text,
+                            inline=False
+                        )
+
+                    conn.close()
+                    await interaction.response.send_message(embed=victory_embed)
                     return self.stop()
 
                 await interaction.response.send_message(embed=embed, view=self)
