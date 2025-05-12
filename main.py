@@ -539,18 +539,20 @@ class EncounterView(discord.ui.View):
             return
         # Calculate damage based on roll difference
         if player_roll > enemy_roll:
-                damage_to_enemy = (player_roll - enemy_roll) * 10
+                damage_to_enemy = player_roll - enemy_roll
                 self.enemy_hp -= damage_to_enemy
                 embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
                 embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
                 
-                await interaction.response.send_message(embed=embed, view=self)
-                
                 if self.enemy_hp <= 0:
                     embed = discord.Embed(title="Victory!", color=discord.Color.green())
                     embed.description = f"🏆 {self.character_name} killed the {self.enemy_name}!"
+                    await interaction.response.send_message(embed=embed)
+                    return self.stop()
+                else:
+                    await interaction.response.send_message(embed=embed, view=self)
                     conn = connect()
                     cursor = conn.cursor()
                     cursor.execute("""
@@ -605,7 +607,7 @@ class EncounterView(discord.ui.View):
                     await interaction.response.send_message(embed=embed, view=self)
         else:
             # Calculate and apply damage (with fixed multiplier)
-            damage = (enemy_roll - player_roll) * 4  # Reduced multiplier for fairer combat
+            damage = enemy_roll - player_roll  # Direct damage without multiplier
             new_hp = max(0, self.char_hp - damage)
             cursor.execute("""
             UPDATE profiles
