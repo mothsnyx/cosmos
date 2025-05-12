@@ -541,6 +541,7 @@ class EncounterView(discord.ui.View):
         if player_roll > enemy_roll:
                 damage_to_enemy = (player_roll - enemy_roll) * 10
                 self.enemy_hp -= damage_to_enemy
+                embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
 
