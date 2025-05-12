@@ -466,7 +466,7 @@ class EncounterView(discord.ui.View):
         self.enemy_name = enemy_name
         self.enemy_description = enemy_description
         self.location = location
-        
+
         # Get character level and calculate enemy HP
         conn = connect()
         cursor = conn.cursor()
@@ -475,7 +475,7 @@ class EncounterView(discord.ui.View):
         self.char_level = char_data[0]
         self.char_hp = char_data[1]
         conn.close()
-        
+
         # Enemy HP scales with location
         location_hp = {
             "High School": (30, 50),
@@ -542,7 +542,7 @@ class EncounterView(discord.ui.View):
                 self.enemy_hp -= damage_to_enemy
                 embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
                 embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
-                
+
                 if self.enemy_hp <= 0:
                     embed.description = f"🏆 Victory! {self.character_name} killed the {self.enemy_name}!"
                     conn = connect()
@@ -591,9 +591,9 @@ class EncounterView(discord.ui.View):
                     if leveled_up:
                         embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
 
-            conn.close()
-                await interaction.response.send_message(embed=embed)
-                self.stop()
+                    conn.close()
+                    await interaction.response.send_message(embed=embed)
+                    self.stop()
         else:
             # Calculate and apply damage
             damage = (enemy_roll - player_roll) * 8
@@ -764,7 +764,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
     """, (interaction.user.id, character_name))
     character = cursor.fetchone()
 
-    if not character:
+    if notcharacter:
         await interaction.response.send_message("Character not found!")
         conn.close()
         return
