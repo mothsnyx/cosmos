@@ -617,88 +617,8 @@ class EncounterView(discord.ui.View):
                     await interaction.response.send_message(embed=victory_embed)
                     return self.stop()
 
+                embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
                 await interaction.response.send_message(embed=embed, view=self)
-                conn = connect()
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT active_location FROM profiles
-                    WHERE character_name = ?
-                    """, (self.character_name,))
-                location = cursor.fetchone()[0]
-
-                # 70% chance to find loot
-                if random.random() < 0.7:
-                    cursor.execute("""
-                        SELECT name, description, value, hp_effect FROM loot_items
-                        WHERE location = ?
-                        ORDER BY RANDOM() LIMIT 1
-                        """, (location,))
-                    loot = cursor.fetchone()
-
-                    if loot:
-                        cursor.execute("""
-                        INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-                        SELECT character_id, ?, ?, ?, ?
-                        FROM profiles
-                        WHERE character_name = ?
-                        """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
-                        conn.commit()
-
-                        embed.add_field(name="🎁 Loot Reward!", value=f"Found: {loot[0]}\nValue: {loot[2]} GP")
-                        if loot[3] != 0:
-                            embed.add_field(name="HP Effect", value=str(loot[3]))
-
-                    # Award XP for victory (50-100 XP based on location difficulty)
-                    location_xp = {
-                        "High School": 50,
-                        "City": 65,
-                        "Sewers": 80,
-                        "Forest": 80,
-                        "Abandoned Facility": 100
-                    }
-                    xp_gain = location_xp.get(location, 50)
-                    leveled_up = update_character_xp(self.character_name, xp_gain)
-
-                    # Create a victory embed
-                    victory_embed = discord.Embed(
-                        title="🏆 Combat Victory!",
-                        description=f"{self.character_name} defeated the {self.enemy_name}!",
-                        color=discord.Color.green()
-                    )
-
-                    # Add XP information
-                    victory_embed.add_field(
-                        name="💫 Experience Gained",
-                        value=f"+{xp_gain} XP",
-                        inline=False
-                    )
-
-                    # Add level up notification if applicable
-                    if leveled_up:
-                        victory_embed.add_field(
-                            name="🎉 LEVEL UP!",
-                            value="You've grown stronger!",
-                            inline=False
-                        )
-
-                    # Add loot information if found
-                    if loot:
-                        loot_text = f"**{loot[0]}**\n"
-                        loot_text += f"Value: {loot[2]} GP"
-                        if loot[3] != 0:
-                            loot_text += f"\nHP Effect: {loot[3]}"
-                        victory_embed.add_field(
-                            name="🎁 Loot Acquired!",
-                            value=loot_text,
-                            inline=False
-                        )
-
-                    conn.close()
-                    await interaction.response.send_message(embed=victory_embed)
-                    return self.stop()
-                else:
-                    embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
-                    await interaction.response.send_message(embed=embed, view=self)
         else:
             # Calculate and apply damage (with fixed multiplier)
             damage = enemy_roll - player_roll  # Direct damage without multiplier
