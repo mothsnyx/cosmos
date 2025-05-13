@@ -500,7 +500,7 @@ class EncounterView(discord.ui.View):
             return
         # Calculate damage based on roll difference
         if player_roll > enemy_roll:
-                # Calculate damage with level scaling (10% increase per level)
+            # Calculate damage with level scaling (10% increase per level)
             base_damage = player_roll - enemy_roll
             level_multiplier = 1 + (self.char_level * 0.1)  # Each level adds 10% damage
             damage_to_enemy = int(base_damage * level_multiplier)
@@ -508,7 +508,7 @@ class EncounterView(discord.ui.View):
             embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
             embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
 
-                if self.enemy_hp <= 0:
+            if self.enemy_hp <= 0:
                 # Get location XP values
                 location_xp = {
                     "High School": 50,
