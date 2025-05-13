@@ -505,10 +505,10 @@ class EncounterView(discord.ui.View):
             level_multiplier = 1 + (self.char_level * 0.1)  # Each level adds 10% damage
             damage_to_enemy = int(base_damage * level_multiplier)
             self.enemy_hp -= damage_to_enemy
-            self.enemy_hp -= damage_to_enemy
             embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
             embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
             embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
+            await interaction.response.send_message(embed=embed, view=self)
 
             if self.enemy_hp <= 0:
                 # Get location XP values
