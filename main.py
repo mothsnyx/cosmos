@@ -150,8 +150,9 @@ async def list_characters(interaction: discord.Interaction):
 
     embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
     for char in characters:
+        max_hp = 100 + (char[2] * 10)  # Base HP + (level * 10)
         embed.add_field(name=char[0], 
-                       value=f"Level: {char[2]}\nHP: {char[1]}/100",
+                       value=f"Level: {char[2]}\nHP: {char[1]}/{max_hp}",
                        inline=False)
     await interaction.response.send_message(embed=embed)
 
@@ -179,8 +180,9 @@ async def profile(interaction: discord.Interaction, character_name: str):
     cursor.execute("SELECT gp FROM profiles WHERE character_name = ?", (character[0],))
     gp = cursor.fetchone()[0]
 
+    max_hp = 100 + (character[2] * 10)  # Base HP + (level * 10)
     embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
-    embed.add_field(name="HP", value=f"{character[1]}/100")
+    embed.add_field(name="HP", value=f"{character[1]}/{max_hp}")
     embed.add_field(name="Level", value=str(character[2]))
     embed.add_field(name="XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}")
     embed.add_field(name="GP", value=str(gp))
@@ -928,7 +930,11 @@ async def heal(interaction: discord.Interaction, character_name: str, item_name:
         return
 
     item_id, item_name, hp_effect = item
-    new_hp = min(100, current_hp + hp_effect)  # Cap HP at 100
+    # Get character level for max HP calculation
+    cursor.execute("SELECT level FROM profiles WHERE character_id = ?", (character_id,))
+    char_level = cursor.fetchone()[0]
+    max_hp = 100 + (char_level * 10)  # Base HP + (level * 10)
+    new_hp = min(max_hp, current_hp + hp_effect)  # Cap HP at max_hp
 
     # Update character's HP
     cursor.execute("""
@@ -1012,7 +1018,10 @@ async def add_hp(interaction: discord.Interaction, character_name: str, amount: 
         return
 
     character_id, current_hp = character
-    new_hp = min(100, current_hp + amount)  # Cap HP at 100
+    cursor.execute("SELECT level FROM profiles WHERE character_id = ?", (character_id,))
+    char_level = cursor.fetchone()[0]
+    max_hp = 100 + (char_level * 10)  # Base HP + (level * 10)
+    new_hp = min(max_hp, current_hp + amount)  # Cap HP at max_hp
 
     # Update character's HP
     cursor.execute("""
