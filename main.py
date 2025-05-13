@@ -564,34 +564,11 @@ class EncounterView(discord.ui.View):
                         value=loot_text,
                         inline=False
                     )
-                
+
                 conn.close()
                 await interaction.response.send_message(embed=victory_embed)
                 return self.stop()
-            
-            await interaction.response.send_message(embed=embed, view=self)
-                        INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-                        SELECT character_id, ?, ?, ?, ?
-                        FROM profiles
-                        WHERE character_name = ?
-                        """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
-                        conn.commit()
-
-                        loot_text = f"**{loot[0]}**\n"
-                        loot_text += f"Value: {loot[2]} GP"
-                        if loot[3] != 0:
-                            loot_text += f"\nHP Effect: {loot[3]}"
-                        victory_embed.add_field(
-                            name="🎁 Loot Acquired!",
-                            value=loot_text,
-                            inline=False
-                        )
-
-                    conn.close()
-                    await interaction.response.send_message(embed=victory_embed)
-                    return self.stop()
-
-                embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
+            else:
                 await interaction.response.send_message(embed=embed, view=self)
         else:
             # Calculate and apply damage (with fixed multiplier)
