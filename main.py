@@ -509,42 +509,42 @@ class EncounterView(discord.ui.View):
             embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
 
                 if self.enemy_hp <= 0:
-                    # Get location XP values
-                    location_xp = {
-                        "High School": 50,
-                        "City": 65,
-                        "Sewers": 80,
-                        "Forest": 80,
-                        "Abandoned Facility": 100
-                    }
-                    xp_gain = location_xp.get(self.location, 50)
-                    leveled_up = update_character_xp(self.character_name, xp_gain)
+                # Get location XP values
+                location_xp = {
+                    "High School": 50,
+                    "City": 65,
+                    "Sewers": 80,
+                    "Forest": 80,
+                    "Abandoned Facility": 100
+                }
+                xp_gain = location_xp.get(self.location, 50)
+                leveled_up = update_character_xp(self.character_name, xp_gain)
 
-                    # Check for loot
-                    conn = connect()
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT name, description, value, hp_effect FROM loot_items
-                        WHERE location = ?
-                        ORDER BY RANDOM() LIMIT 1
-                        """, (self.location,))
-                    loot = cursor.fetchone()
+                # Check for loot
+                conn = connect()
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT name, description, value, hp_effect FROM loot_items
+                    WHERE location = ?
+                    ORDER BY RANDOM() LIMIT 1
+                    """, (self.location,))
+                loot = cursor.fetchone()
 
-                    # Create victory embed
-                    victory_embed = discord.Embed(
-                        title="🏆 Combat Victory!",
-                        description=f"{self.character_name} defeated the {self.enemy_name}!",
-                        color=discord.Color.green()
+                # Create victory embed
+                victory_embed = discord.Embed(
+                    title="🏆 Combat Victory!",
+                    description=f"{self.character_name} defeated the {self.enemy_name}!",
+                    color=discord.Color.green()
+                )
+
+                victory_embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
+
+                if leveled_up:
+                    victory_embed.add_field(
+                        name="🎉 LEVEL UP!",
+                        value="You've grown stronger!",
+                        inline=False
                     )
-
-                    victory_embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
-
-                    if leveled_up:
-                        victory_embed.add_field(
-                            name="🎉 LEVEL UP!",
-                            value="You've grown stronger!",
-                            inline=False
-                        )
 
                     # Add loot if found
                     if loot and random.random() < 0.7:  # 70% chance to get loot
