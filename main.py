@@ -500,12 +500,13 @@ class EncounterView(discord.ui.View):
             return
         # Calculate damage based on roll difference
         if player_roll > enemy_roll:
-                damage_to_enemy = player_roll - enemy_roll
-                self.enemy_hp -= damage_to_enemy
-                embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
-                embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage!")
-                embed.add_field(name="Enemy HP", value=f"{max(0, self.enemy_hp)}/{self.max_enemy_hp}")
-                embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
+                # Calculate damage with level scaling (10% increase per level)
+            base_damage = player_roll - enemy_roll
+            level_multiplier = 1 + (self.char_level * 0.1)  # Each level adds 10% damage
+            damage_to_enemy = int(base_damage * level_multiplier)
+            self.enemy_hp -= damage_to_enemy
+            embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
+            embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
 
                 if self.enemy_hp <= 0:
                     # Get location XP values
@@ -535,7 +536,7 @@ class EncounterView(discord.ui.View):
                         description=f"{self.character_name} defeated the {self.enemy_name}!",
                         color=discord.Color.green()
                     )
-                    
+
                     victory_embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
 
                     if leveled_up:
@@ -755,7 +756,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
 
     if not item:
         await interaction.response.send_message(f"{character_name} doesn't have a {item_name}!")
-        conn.close()
+        conn.close>
         return
 
     # Remove the item
