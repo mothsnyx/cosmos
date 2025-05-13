@@ -508,7 +508,6 @@ class EncounterView(discord.ui.View):
             embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
             embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
             embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
-            await interaction.response.send_message(embed=embed, view=self)
 
             if self.enemy_hp <= 0:
                 # Get location XP values
@@ -523,8 +522,6 @@ class EncounterView(discord.ui.View):
                 leveled_up = update_character_xp(self.character_name, xp_gain)
 
                 # Check for loot
-                conn = connect()
-                cursor = conn.cursor()
                 cursor.execute("""
                     SELECT name, description, value, hp_effect FROM loot_items
                     WHERE location = ?
@@ -571,10 +568,8 @@ class EncounterView(discord.ui.View):
                 conn.close()
                 await interaction.response.send_message(embed=victory_embed)
                 return self.stop()
-
-                    # Add loot if found
-                    if loot and random.random() < 0.7:  # 70% chance to get loot
-                        cursor.execute("""
+            
+            await interaction.response.send_message(embed=embed, view=self)
                         INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
                         SELECT character_id, ?, ?, ?, ?
                         FROM profiles
