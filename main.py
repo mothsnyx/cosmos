@@ -492,7 +492,8 @@ class EncounterView(discord.ui.View):
 
         if player_roll == enemy_roll:
             embed.description = f"Both {self.character_name} and {self.enemy_name} matched each other's moves! Combat continues!"
-            embed.add_field(name="Your HP", value=f"{self.char_hp}/100", inline=True)
+            max_hp = 100 + (self.char_level * 10)  # Base HP + (level * 10)
+            embed.add_field(name="Your HP", value=f"{self.char_hp}/{max_hp}", inline=True)
             embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
             embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
             await interaction.response.send_message(embed=embed, view=self)
@@ -582,7 +583,8 @@ class EncounterView(discord.ui.View):
             conn.commit()
 
             embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
-            embed.add_field(name="Your HP", value=f"{new_hp}/100", inline=True)
+            max_hp = 100 + (self.char_level * 10)  # Base HP + (level * 10)
+            embed.add_field(name="Your HP", value=f"{new_hp}/{max_hp}", inline=True)
             embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
 
             if new_hp <= 0:
