@@ -548,6 +548,30 @@ class EncounterView(discord.ui.View):
                         inline=False
                     )
 
+                # Add loot if found
+                if loot and random.random() < 0.7:  # 70% chance to get loot
+                    cursor.execute("""
+                    INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+                    SELECT character_id, ?, ?, ?, ?
+                    FROM profiles
+                    WHERE character_name = ?
+                    """, (loot[0], loot[1], loot[2], loot[3], self.character_name))
+                    conn.commit()
+
+                    loot_text = f"**{loot[0]}**\n"
+                    loot_text += f"Value: {loot[2]} GP"
+                    if loot[3] != 0:
+                        loot_text += f"\nHP Effect: {loot[3]}"
+                    victory_embed.add_field(
+                        name="🎁 Loot Acquired!",
+                        value=loot_text,
+                        inline=False
+                    )
+                
+                conn.close()
+                await interaction.response.send_message(embed=victory_embed)
+                return self.stop()
+
                     # Add loot if found
                     if loot and random.random() < 0.7:  # 70% chance to get loot
                         cursor.execute("""
