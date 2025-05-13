@@ -406,55 +406,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
             conn.close()
             return
 
-    # 70% chance to find loot
-    if random.random() < 0.7:
-        cursor.execute("""
-        SELECT name, description, value, hp_effect FROM loot_items
-        WHERE location = ?
-        ORDER BY RANDOM() LIMIT 1
-        """, (current_location,))
-        loot = cursor.fetchone()
-
-        if loot:
-            # Add item to inventory
-            cursor.execute("""
-            INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
-            SELECT character_id, ?, ?, ?, ?
-            FROM profiles
-            WHERE user_id = ? AND character_name = ?
-            """, (loot[0], loot[1], loot[2], loot[3], interaction.user.id, character_name))
-
-            conn.commit()  # Commit the inventory addition
-
-            embed = discord.Embed(
-                title="🎁 Loot Found!",
-                description=f"{character_name} found: {loot[0]}\n{loot[1]}",
-                color=discord.Color.gold()
-            )
-            embed.add_field(name="Value", value=f"{loot[2]} GP")
-            if loot[3] != 0:
-                embed.add_field(name="HP Effect", value=str(loot[3]))
-
-            # Award XP for finding loot (20-40 XP based on location)
-            location_xp = {
-                "High School": 20,
-                "City": 25,
-                "Sewers": 30,
-                "Forest": 30,
-                "Abandoned Facility": 40
-            }
-            xp_gain = location_xp.get(current_location, 20)
-            leveled_up = update_character_xp(character_name, xp_gain)
-
-            if leveled_up:
-                embed.add_field(name="Level Up! 🎉", value="You've grown stronger!")
-            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP")
-
-            await interaction.response.send_message(embed=embed)
-        else:
-            await interaction.response.send_message(f"{character_name} found nothing of value...")
-    else:
-        await interaction.response.send_message(f"{character_name} found nothing of value...")
+    await interaction.response.send_message(f"{character_name} found nothing of value...")
 
     conn.close()
 
