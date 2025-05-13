@@ -826,8 +826,8 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
         conn.close()
         return
 
-    # Add half the value as GP (selling gives 50% of buy price)
-    sell_value = item[1] // 2
+    # Add full value as GP
+    sell_value = item[1]
     cursor.execute("UPDATE profiles SET gp = gp + ? WHERE character_id = ?", 
                   (sell_value, character[0]))
 
