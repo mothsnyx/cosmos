@@ -756,7 +756,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
 
     if not item:
         await interaction.response.send_message(f"{character_name} doesn't have a {item_name}!")
-        conn.close>
+        conn.close()
         return
 
     # Remove the item
