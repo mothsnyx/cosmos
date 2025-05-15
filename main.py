@@ -52,11 +52,11 @@ class RPGBot(discord.Client):
 
         # Load game data with difficulty levels
         self.areas = {
-            "High School": Area("High School (Easy)", ["Bully", "Delinquent", "Rival Student"], 
+            "High School": Area("High School (Easy)", ["Possessed Locker", "Drama Club Phantom", "Library Ghoul", "Social Feeder", "Janitor"], 
                               ["Training Manual", "School Uniform", "Basic Nen Tools"], 0, 5, 10),
-            "City": Area("City (Medium)", ["Thug", "Criminal", "Corrupt Officer"], 
+            "City": Area("City (Medium)", ["Street Delinquent", "Blackmarket Enforcer", "Lawmen (Corrupt)", "Eyeless", "Weeper", "Hunter"], 
                         ["Street Weapon", "Combat Gear", "City Maps"], 5, 10, 20),
-            "Sewers": Area("Sewers (Hard)", ["Mutant", "Underground Boss", "Escaped Experiment"], 
+            "Sewers": Area("Sewers (Hard)", ["Drowned", "Molemen", "Sewer Rat", "Sludge Beast", "Pipeborn"], 
                           ["Toxic Shield", "Sewer Map", "Rare Artifact"], 10, 15, 30),
             "Forest": Area("Forest (Hard)", ["Beast", "Dark Hunter", "Ancient Spirit"], 
                           ["Beast Core", "Spirit Essence", "Forest Relic"], 10, 15, 30),
