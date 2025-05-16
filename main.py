@@ -943,24 +943,26 @@ async def add_hp(interaction: discord.Interaction, character_name: str, amount: 
     embed.add_field(name="New HP", value=f"{new_hp}/100")
     await interaction.response.send_message(embed=embed)
 
-@client.tree.command(name="roll", description="Rolls a dice in NdX format")
-async def roll(ctx, dice: str = "1d20"):
-    """Rolls a dice in NdX format and pings the user."""
+@client.tree.command(name="roll", description="Rolls dice in NdX format (e.g. 2d6 for two 6-sided dice)")
+async def roll(interaction: discord.Interaction, dice: str = "1d20"):
     try:
         num, sides = map(int, dice.lower().split("d"))
-        if num <= 0 or sides <= 0:
-            await ctx.send("Please enter a valid dice format, e.g., 1d20.")
+        if num <= 0 or sides <= 0 or num > 100:  # Added upper limit for safety
+            await interaction.response.send_message("Please enter a valid dice format (e.g., 1d20). Maximum 100 dice.")
             return
 
         rolls = [random.randint(1, sides) for _ in range(num)]
         total = sum(rolls)
         roll_results = ", ".join(map(str, rolls))
-
-        # Send a normal message with proper formatting
-        await ctx.send(f"<a:DiceRoll:1372965997841223700> ┃ You rolled **{roll_results}**")
+        
+        message = f"<a:DiceRoll:1372965997841223700> ┃ You rolled **{roll_results}**"
+        if len(rolls) > 1:
+            message += f"\nTotal: **{total}**"
+            
+        await interaction.response.send_message(message)
 
     except ValueError:
-        await ctx.send("Invalid format! Use NdX (e.g., 1d20, 2d6).")
+        await interaction.response.send_message("Invalid format! Use NdX (e.g., 1d20, 2d6).")
 
 
 @client.tree.command(name="set_level", description="Manually set your character's level")
