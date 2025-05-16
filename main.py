@@ -976,9 +976,10 @@ async def commands(interaction: discord.Interaction):
 `/list_characters` - List all your characters
 `/profile` - Show detailed character information
 `/set_level` - Manually set character level
+
 """, inline=False)
 
-    embed.add_field(name="", value="", inline=False)
+    embed.add_field(name="⎯", value="", inline=False)
 
     # Combat & Exploration
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Combat & Exploration", value="""
@@ -988,9 +989,10 @@ async def commands(interaction: discord.Interaction):
 `/fight` - Fight a specific enemy
 `/loot` - Search for loot in current area
 `/roll` - Roll dice (e.g. 2d6 for two 6-sided dice)
+
 """, inline=False)
 
-    embed.add_field(name="", value="", inline=False)
+    embed.add_field(name="⎯", value="", inline=False)
 
     # Inventory & Items
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Inventory & Items", value="""
@@ -1000,9 +1002,10 @@ async def commands(interaction: discord.Interaction):
 `/remove_item` - Remove an item from inventory
 `/heal` - Use a healing item
 `/add_hp` - Add HP to your character
+
 """, inline=False)
 
-    embed.add_field(name="", value="", inline=False)
+    await interaction.response.send_message(embed=embed)
 
 """, inline=False)
 
