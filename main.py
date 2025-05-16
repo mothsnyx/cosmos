@@ -192,12 +192,18 @@ async def profile(interaction: discord.Interaction, character_name: str):
     embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character[0]}'s Profile", color=0x8c52ff)
     
     # Character Stats Section
-    embed.add_field(name="───── ⋆⋅ Character Stats ⋅⋆ ─────", value="", inline=False)
-    embed.add_field(name="<:pink_diamond:1373010874909986816> HP", value=f"{character[1]}/{max_hp}", inline=True)
-    embed.add_field(name="<:orange_diamond:1373010903515005190> Level", value=str(character[2]), inline=True)
-    embed.add_field(name="<:orange_diamond:1373010903515005190> XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}", inline=True)
-    embed.add_field(name="<:yellow_diamond:1373010894149128273> GP", value=str(gp), inline=True)
-    embed.add_field(name="<:blue_diamond:1373010883696918690> Location", value=character[3] or "Not in any location", inline=True)
+    embed.add_field(name="── ✦ Character Stats", value="", inline=False)
+    embed.add_field(name="‎", value="", inline=False)
+    embed.add_field(name="<:61152memberglow:1373020726294085743> HP", value=f"{character[1]}/{max_hp}", inline=True)
+    embed.add_field(name="‎", value="", inline=False)
+    embed.add_field(name="<:37208ownerglow:1373020739090911386> Level", value=str(character[2]), inline=True)
+    embed.add_field(name="‎", value="", inline=False)
+    embed.add_field(name="<:93739moderatorglow:1373020791997993190> XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}", inline=True)
+    embed.add_field(name="‎", value="", inline=False)
+    embed.add_field(name="<:74658vipglow:1373020781163843604> GP", value=str(gp), inline=True)
+    embed.add_field(name="‎", value="", inline=False)
+    embed.add_field(name="<:34647adminglow:1373020846209372250> Location", value=character[3] or "Not in any location", inline=True)
+    embed.add_field(name="‎", value="", inline=False)
     
     # Get inventory items
     cursor.execute("""
@@ -236,14 +242,14 @@ async def profile(interaction: discord.Interaction, character_name: str):
 
         # Add Consumables Section
         if consumables:
-            embed.add_field(name="───── ⋆⋅ Consumables ⋅⋆ ─────", value="\n".join(consumables), inline=False)
+            embed.add_field(name="── ✦ Consumables", value="\n".join(consumables), inline=False)
             
         # Add Sellable Items Section
         if sellable_items:
-            embed.add_field(name="───── ⋆⋅ Sellable Items ⋅⋆ ─────", value="\n".join(sellable_items), inline=False)
+            embed.add_field(name="── ✦ Sellable Items", value="\n".join(sellable_items), inline=False)
             
     else:
-        embed.add_field(name="───── ⋆⋅ Inventory ⋅⋆ ─────", value="Empty", inline=False)
+        embed.add_field(name="── ✦ Inventory", value="Empty", inline=False)
 
     await interaction.response.send_message(embed=embed)
     conn.close()
