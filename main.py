@@ -52,24 +52,24 @@ class RPGBot(discord.Client):
 
         # Load game data with difficulty levels
         self.areas = {
-        "High School": Area("High School (Easy)", ["Possessed Locker", "Drama Club Phantom", "Library Ghoul", "Social Feeder", "Janitor"], 
-                          ["Pencil Case", "Minor Healing Potion", "Energy Drink"], 0, 5, 5)
-        "Park": Area("Park (Easy)", ["Vineleech", "Hollow Deer", "Soot Crow", "Smiling Bench Guy", "Playground Ghost"],
+            "High School": Area("High School (Easy)", ["Possessed Locker", "Drama Club Phantom", "Library Ghoul", "Social Feeder", "Janitor"], 
+                              ["Training Manual", "School Uniform", "Basic Nen Tools"], 0, 5, 5),
+            "Park": Area("Park (Easy)", ["Vineleech", "Hollow Deer", "Soot Crow", "Smiling Bench Guy", "Playground Ghost"],
                           ["Bike Lock", "Bench", "Picnic Basket"], 0, 5, 5),
-        "Beach": Area("Beach (Medium)", ["Drifter", "Crabswarm", "Broken Ray", "Tidewolf", "Gullmock"],
-                          ["Sea Glass", "Shell", "Driftwood", "Beach Ball", "Towel"], 5, 10, 15
-        "City": Area("City (Medium)", ["Street Delinquent", "Blackmarket Enforcer", "Lawmen (Corrupt)", "Eyeless", "Weeper", "Hunter"], 
+            "Beach": Area("Beach (Medium)", ["Drifter", "Crabswarm", "Broken Ray", "Tidewolf", "Gullmock"],
+                          ["Sea Glass", "Shell", "Driftwood", "Beach Ball", "Towel"], 5, 10, 15),
+            "City": Area("City (Medium)", ["Street Delinquent", "Blackmarket Enforcer", "Lawmen (Corrupt)", "Eyeless", "Weeper", "Hunter"], 
                           ["Street Weapon", "Combat Gear", "City Maps"], 5, 10, 20),
-        "Sewers": Area("Sewers (Hard)", ["Drowned", "Molemen", "Sewer Rat", "Sludge Beast", "Pipeborn"], 
+            "Sewers": Area("Sewers (Hard)", ["Drowned", "Molemen", "Sewer Rat", "Sludge Beast", "Pipeborn"], 
                           ["Toxic Shield", "Sewer Map", "Rare Artifact"], 10, 15, 30),
-        "Forest": Area("Forest (Hard)", ["Beast", "Dark Hunter", "Ancient Spirit"], 
-                                    ["Beast Core", "Spirit Essence", "Forest Relic"], 10, 15, 30),
-        "Destroyed Research Site": Area("Destroyed Research Site (Extreme)", ["Murmur", "Revenant", "Gnawer", "Screamer"],
-                                        ["Research Data", "Prototype Device", "Healing Nanites"], 15, 20, 50
-        "Abandoned Facility": Area("Abandoned Facility (Extreme)", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
-                                    ["Experimental Gear", "Research Data", "Ultimate Tech"], 15, 20, 50)
-        "Ash Lake": Area("Ash Lake (Nightmare)", ["Ash Beast", "Ash Hunter", "Ash Guardian"],
-                         ["Ash Core", "Ash Essence", "Ash Relic"], 20, 20, 100
+            "Forest": Area("Forest (Hard)", ["Beast", "Dark Hunter", "Ancient Spirit"], 
+                          ["Beast Core", "Spirit Essence", "Forest Relic"], 10, 15, 30),
+            "Destroyed Research Site": Area("Destroyed Research Site (Extreme)", ["Murmur", "Revenant", "Gnawer", "Screamer"],
+                          ["Research Data", "Prototype Device", "Healing Nanites"], 15, 20, 50),
+            "Abandoned Facility": Area("Abandoned Facility (Extreme)", ["Failed Experiment", "Mad Scientist", "Ultimate Weapon"], 
+                          ["Experimental Gear", "Research Data", "Ultimate Tech"], 15, 20, 50),
+            "Ash Lake": Area("Ash Lake (Nightmare)", ["Ash Beast", "Ash Hunter", "Ash Guardian"],
+                          ["Ash Core", "Ash Essence", "Ash Relic"], 20, 20, 100)
         }
 
         self.shop_items = {
@@ -231,13 +231,13 @@ async def profile(interaction: discord.Interaction, character_name: str):
 @client.tree.command(name="explore", description="Explore an area with a specific character")
 @app_commands.choices(area=[
     app_commands.Choice(name="High School (Easy) - Level 0-5", value="High School"),
-    app_commands.Choice(name="Park (Easy) - Level 5-10", value="Park")
-    app_commands.Choice(name="Beach (Medium) - Level 5-10", value="Beach")
+    app_commands.Choice(name="Park (Easy) - Level 5-10", value="Park"),
+    app_commands.Choice(name="Beach (Medium) - Level 5-10", value="Beach"),
     app_commands.Choice(name="City (Medium) - Level 5-10", value="City"),
     app_commands.Choice(name="Sewers (Hard) - Level 10-15", value="Sewers"),
     app_commands.Choice(name="Forest (Hard) - Level 10-15", value="Forest"),
-    app_commands.Choice(name="Destroyed Research Site (Extreme) - Level 15-20", value="Destroyed Research Site")
-    app_commands.Choice(name="Abandoned Facility (Extreme) - Level 15-20", value="Abandoned Facility")
+    app_commands.Choice(name="Destroyed Research Site (Extreme) - Level 15-20", value="Destroyed Research Site"),
+    app_commands.Choice(name="Abandoned Facility (Extreme) - Level 15-20", value="Abandoned Facility"),
     app_commands.Choice(name="Ash Lake (Nightmare) - Level 20", value="Ash Lake")
 ])
 async def explore(interaction: discord.Interaction, character_name: str, area: str):
@@ -455,8 +455,8 @@ class EncounterView(discord.ui.View):
             "City": (35, 60),
             "Sewers": (60, 100),
             "Forest": (60, 100),
-            "Destroyed Research Site": (110, 150)
-            "Abandoned Facility": (100, 130)
+            "Destroyed Research Site": (110, 150),
+            "Abandoned Facility": (100, 130),
             "Ash Lake": (150, 200)
         }
         min_hp, max_hp = location_hp.get(location, (30, 50))
@@ -472,8 +472,8 @@ class EncounterView(discord.ui.View):
             "City": (10, 25),         # Moderate challenge
             "Sewers": (15, 35),      # Harder but not unfair
             "Forest": (15, 35),      # Similar to sewers
-            "Destroyed Research Site": (30, 50)
-            "Abandoned Facility": (25, 45)  # Tough but manageable
+            "Destroyed Research Site": (30, 50),
+            "Abandoned Facility": (25, 45),  # Tough but manageable
             "Ash Lake": (40, 70)
         }
         min_dmg, max_dmg = damage_ranges.get(location, (5, 15))
@@ -543,8 +543,8 @@ class EncounterView(discord.ui.View):
                     "City": 65,
                     "Sewers": 80,
                     "Forest": 80,
-                    "Destroyed Research Site": 150
-                    "Abandoned Facility": 100
+                    "Destroyed Research Site": 150,
+                    "Abandoned Facility": 100,
                     "Ash Lake": 200
                 }
                 xp_gain = location_xp.get(self.location, 50)
@@ -641,8 +641,8 @@ class SecondChanceView(discord.ui.View):
             "City": (10, 30),
             "Sewers": (30, 50),
             "Forest": (15, 30),
-            "Destroyed Research Site": (40, 70)
-            "Abandoned Facility": (45, 65)
+            "Destroyed Research Site": (40, 70),
+            "Abandoned Facility": (45, 65),
             "Ash Lake": (50, 80)
         }
         min_dmg, max_dmg = damage_ranges.get(location, (2, 20))
