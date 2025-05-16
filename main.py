@@ -967,7 +967,9 @@ async def roll(interaction: discord.Interaction, dice: str = "1d20"):
 
 @client.tree.command(name="commands", description="List all available commands")
 async def commands(interaction: discord.Interaction):
-    embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Available Commands", color=0x000000)
+    embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Available Commands", color=0x8c52ff)
+
+    embed.add_field(name="‎", value="", inline=False)
     
     # Character Management
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Character Commands", value="""
@@ -978,6 +980,7 @@ async def commands(interaction: discord.Interaction):
 `/set_level` - Manually set character level
 
 """, inline=False)
+
 
     embed.add_field(name="‎", value="", inline=False)
 
