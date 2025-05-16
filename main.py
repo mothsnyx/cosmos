@@ -430,28 +430,57 @@ async def loot(interaction: discord.Interaction, character_name: str):
 
     current_location = character[0]
 
-    # Random chance (20%) to encounter enemy
-    if random.random() < 0.2:
+    # 70% chance to find loot when no enemy
+    if random.random() >= 0.2:  # No enemy encounter
         cursor.execute("""
-        SELECT name, description FROM enemies
+        SELECT name, description, value, hp_effect FROM loot_items
         WHERE location = ?
         ORDER BY RANDOM() LIMIT 1
         """, (current_location,))
-        enemy = cursor.fetchone()
+        loot = cursor.fetchone()
 
-        if enemy:
-            embed = discord.Embed(
-                title="Enemy Encounter", 
-                description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
-                color=discord.Color.red()
-            )
-            view = EncounterView(character_name, enemy[0], enemy[1], current_location)
-            await interaction.response.send_message(embed=embed, view=view)
+        if loot and random.random() < 0.7:  # 70% chance to get the loot
+            # Add item to inventory
+            cursor.execute("""
+            INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
+            SELECT character_id, ?, ?, ?, ?
+            FROM profiles
+            WHERE character_name = ?
+            """, (loot[0], loot[1], loot[2], loot[3], character_name))
+            conn.commit()
+
+            embed = discord.Embed(title="Loot Found!", color=discord.Color.green())
+            embed.add_field(name="Item", value=loot[0])
+            embed.add_field(name="Value", value=f"{loot[2]} GP")
+            if loot[3] != 0:
+                embed.add_field(name="HP Effect", value=str(loot[3]))
+            await interaction.response.send_message(embed=embed)
             conn.close()
             return
 
-    await interaction.response.send_message(f"{character_name} found nothing of value...")
+        await interaction.response.send_message(f"{character_name} found nothing of value...")
+        conn.close()
+        return
 
+    # Enemy encounter (20% chance)
+    cursor.execute("""
+    SELECT name, description FROM enemies
+    WHERE location = ?
+    ORDER BY RANDOM() LIMIT 1
+    """, (current_location,))
+    enemy = cursor.fetchone()
+
+    if enemy:
+        embed = discord.Embed(
+            title="Enemy Encounter", 
+            description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
+            color=discord.Color.red()
+        )
+        view = EncounterView(character_name, enemy[0], enemy[1], current_location)
+        await interaction.response.send_message(embed=embed, view=view)
+    else:
+        await interaction.response.send_message(f"{character_name} found nothing of value...")
+    
     conn.close()
 
 # Encounter system variables
