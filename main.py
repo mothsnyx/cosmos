@@ -449,11 +449,29 @@ async def loot(interaction: discord.Interaction, character_name: str):
             """, (loot[0], loot[1], loot[2], loot[3], character_name))
             conn.commit()
 
+            # Give XP based on location
+            location_xp = {
+                "High School": 10,
+                "Park": 10,
+                "Beach": 15,
+                "City": 15,
+                "Sewers": 20,
+                "Forest": 20,
+                "Destroyed Research Site": 30,
+                "Abandoned Facility": 25,
+                "Ash Lake": 40
+            }
+            xp_gain = location_xp.get(current_location, 10)
+            leveled_up = update_character_xp(character_name, xp_gain)
+
             embed = discord.Embed(title="Loot Found!", color=discord.Color.green())
             embed.add_field(name="Item", value=loot[0])
             embed.add_field(name="Value", value=f"{loot[2]} GP")
             if loot[3] != 0:
                 embed.add_field(name="HP Effect", value=str(loot[3]))
+            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP", inline=False)
+            if leveled_up:
+                embed.add_field(name="🎉 LEVEL UP!", value="You've grown stronger!", inline=False)
             await interaction.response.send_message(embed=embed)
             conn.close()
             return
