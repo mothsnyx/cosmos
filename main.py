@@ -189,13 +189,16 @@ async def profile(interaction: discord.Interaction, character_name: str):
     gp = cursor.fetchone()[0]
 
     max_hp = 100 + (character[2] * 10)  # Base HP + (level * 10)
-    embed = discord.Embed(title=f"{character[0]}'s Profile", color=discord.Color.blue())
-    embed.add_field(name="HP", value=f"{character[1]}/{max_hp}")
-    embed.add_field(name="Level", value=str(character[2]))
-    embed.add_field(name="XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}")
-    embed.add_field(name="GP", value=str(gp))
-    embed.add_field(name="Location", value=character[3] or "Not in any location")
-
+    embed = discord.Embed(title=f"<:AdminIcon:1372980092027928726> ┃ {character[0]}'s Profile", color=0x5d17eb)
+    
+    # Character Stats Section
+    embed.add_field(name="⎯⎯⎯ Character Stats ⎯⎯⎯", value="", inline=False)
+    embed.add_field(name="❤️ HP", value=f"{character[1]}/{max_hp}", inline=True)
+    embed.add_field(name="📊 Level", value=str(character[2]), inline=True)
+    embed.add_field(name="💰 GP", value=str(gp), inline=True)
+    embed.add_field(name="📈 XP Progress", value=f"{character[5]}/{int(xp_for_next_level)}", inline=True)
+    embed.add_field(name="📍 Location", value=character[3] or "Not in any location", inline=True)
+    
     # Get inventory items
     cursor.execute("""
     SELECT item_name, description, value, hp_effect 
@@ -205,25 +208,42 @@ async def profile(interaction: discord.Interaction, character_name: str):
     items = cursor.fetchall()
 
     if items:
+        # Separate items into categories
+        consumables = []
+        sellable_items = []
+        
         # Count duplicate items
         item_counts = {}
         for item in items:
             item_key = (item[0], item[2], item[3])  # name, value, hp_effect
             item_counts[item_key] = item_counts.get(item_key, 0) + 1
-
-        inventory_text = ""
+            
+        # Sort items into categories
         for item_key, count in item_counts.items():
             name, value, hp_effect = item_key
-            inventory_text += f"• {name} (Value: {value} GP"
+            item_text = f"• {name} (Value: {value} GP"
             if hp_effect != 0:
-                inventory_text += f", HP: {hp_effect}"
+                item_text += f", HP: {hp_effect}"
             if count > 1:
-                inventory_text += f") [x{count}]\n"
+                item_text += f") [x{count}]"
             else:
-                inventory_text += ")\n"
-        embed.add_field(name="Inventory", value=inventory_text, inline=False)
+                item_text += ")"
+                
+            if hp_effect > 0:
+                consumables.append(item_text)
+            else:
+                sellable_items.append(item_text)
+
+        # Add Consumables Section
+        if consumables:
+            embed.add_field(name="⎯⎯⎯ Consumables ⎯⎯⎯", value="\n".join(consumables), inline=False)
+            
+        # Add Sellable Items Section
+        if sellable_items:
+            embed.add_field(name="⎯⎯⎯ Sellable Items ⎯⎯⎯", value="\n".join(sellable_items), inline=False)
+            
     else:
-        embed.add_field(name="Inventory", value="Empty", inline=False)
+        embed.add_field(name="⎯⎯⎯ Inventory ⎯⎯⎯", value="Empty", inline=False)
 
     await interaction.response.send_message(embed=embed)
     conn.close()
