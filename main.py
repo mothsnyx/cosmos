@@ -970,7 +970,7 @@ async def commands(interaction: discord.Interaction):
     embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
     
     # Character Management
-    embed.add_field(name="Character Commands", value="""
+    embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Character Commands", value="""
 `/create_character` - Create a new character
 `/delete_character` - Delete one of your characters
 `/list_characters` - List all your characters
@@ -978,8 +978,11 @@ async def commands(interaction: discord.Interaction):
 `/set_level` - Manually set character level
 """, inline=False)
 
+    embed.add_field(name="", value="", inline=False)
+
     # Combat & Exploration
-    embed.add_field(name="Combat & Exploration", value="""
+    embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Combat & Exploration", value="""
+`/weather` - Check current weather
 `/explore` - Enter a location to explore
 `/leave` - Leave current location
 `/fight` - Fight a specific enemy
@@ -987,8 +990,10 @@ async def commands(interaction: discord.Interaction):
 `/roll` - Roll dice (e.g. 2d6 for two 6-sided dice)
 """, inline=False)
 
+    embed.add_field(name="", value="", inline=False)
+
     # Inventory & Items
-    embed.add_field(name="Inventory & Items", value="""
+    embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Inventory & Items", value="""
 `/shop` - View items available in shop
 `/buy` - Purchase an item from shop
 `/sell_item` - Sell an item from inventory
@@ -997,9 +1002,8 @@ async def commands(interaction: discord.Interaction):
 `/add_hp` - Add HP to your character
 """, inline=False)
 
-    # World
-    embed.add_field(name="World", value="""
-`/weather` - Check current weather
+    embed.add_field(name="", value="", inline=False)
+
 """, inline=False)
 
     await interaction.response.send_message(embed=embed)
