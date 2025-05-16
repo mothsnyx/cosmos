@@ -965,6 +965,45 @@ async def roll(interaction: discord.Interaction, dice: str = "1d20"):
         await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Invalid format! Use NdX (e.g., 1d20, 2d6).")
 
 
+@client.tree.command(name="commands", description="List all available commands")
+async def commands(interaction: discord.Interaction):
+    embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
+    
+    # Character Management
+    embed.add_field(name="Character Commands", value="""
+`/create_character` - Create a new character
+`/delete_character` - Delete one of your characters
+`/list_characters` - List all your characters
+`/profile` - Show detailed character information
+`/set_level` - Manually set character level
+""", inline=False)
+
+    # Combat & Exploration
+    embed.add_field(name="Combat & Exploration", value="""
+`/explore` - Enter a location to explore
+`/leave` - Leave current location
+`/fight` - Fight a specific enemy
+`/loot` - Search for loot in current area
+`/roll` - Roll dice (e.g. 2d6 for two 6-sided dice)
+""", inline=False)
+
+    # Inventory & Items
+    embed.add_field(name="Inventory & Items", value="""
+`/shop` - View items available in shop
+`/buy` - Purchase an item from shop
+`/sell_item` - Sell an item from inventory
+`/remove_item` - Remove an item from inventory
+`/heal` - Use a healing item
+`/add_hp` - Add HP to your character
+""", inline=False)
+
+    # World
+    embed.add_field(name="World", value="""
+`/weather` - Check current weather
+""", inline=False)
+
+    await interaction.response.send_message(embed=embed)
+
 @client.tree.command(name="set_level", description="Manually set your character's level")
 async def set_level(interaction: discord.Interaction, character_name: str, level: int):
     conn = connect()
