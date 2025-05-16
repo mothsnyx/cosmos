@@ -748,9 +748,12 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
 
 @client.tree.command(name="weather", description="Check the current weather")
 async def weather(interaction: discord.Interaction):
-    if random.random() < 0.3:  # 30% chance to change weather
+    # Always pick a random weather if not set
+    if not hasattr(client, 'current_weather'):
         client.current_weather = random.choice(client.weather)
-    await interaction.response.send_message(f"Current weather: {client.current_weather}")
+    elif random.random() < 0.3:  # 30% chance to change weather
+        client.current_weather = random.choice(client.weather)
+    await interaction.response.send_message(f"<:WeatherIcon:1372980092027928726> ┃ Current weather: **{client.current_weather}**")
 
 # Register all commands at startup
 @client.event
