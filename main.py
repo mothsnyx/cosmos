@@ -967,7 +967,7 @@ async def roll(interaction: discord.Interaction, dice: str = "1d20"):
 
 @client.tree.command(name="commands", description="List all available commands")
 async def commands(interaction: discord.Interaction):
-    embed = discord.Embed(title="Available Commands", color=discord.Color.blue())
+    embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Available Commands", color=0x000000)
     
     # Character Management
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Character Commands", value="""
@@ -979,7 +979,7 @@ async def commands(interaction: discord.Interaction):
 
 """, inline=False)
 
-    embed.add_field(name="⎯", value="", inline=False)
+    embed.add_field(name="‎", value="", inline=False)
 
     # Combat & Exploration
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Combat & Exploration", value="""
@@ -992,7 +992,7 @@ async def commands(interaction: discord.Interaction):
 
 """, inline=False)
 
-    embed.add_field(name="⎯", value="", inline=False)
+    embed.add_field(name="‎", value="", inline=False)
 
     # Inventory & Items
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Inventory & Items", value="""
@@ -1002,10 +1002,6 @@ async def commands(interaction: discord.Interaction):
 `/remove_item` - Remove an item from inventory
 `/heal` - Use a healing item
 `/add_hp` - Add HP to your character
-
-""", inline=False)
-
-    await interaction.response.send_message(embed=embed)
 
 """, inline=False)
 
