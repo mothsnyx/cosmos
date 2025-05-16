@@ -332,8 +332,10 @@ async def leave(interaction: discord.Interaction, character_name: str):
 @client.tree.command(name="shop", description="View available items in the shop")
 async def shop(interaction: discord.Interaction):
     embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Shop", description="Available items:", color=0x8c52ff)
+    embed.add_field(name="‎", value="", inline=False)  # Add initial spacing
     for item, details in client.shop_items.items():
         embed.add_field(name=item, value=f"Price: {details['price']} GP\n{details['description']}", inline=False)
+        embed.add_field(name="‎", value="", inline=False)  # Add spacing between items
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="buy", description="Buy an item from the shop")
