@@ -73,9 +73,9 @@ class RPGBot(discord.Client):
         }
 
         self.shop_items = {
-            "<:wizard_potion:1372986090046357657> Minor Healing Potion": {"price": 20, "hp_effect": 10, "description": "Restores 10 HP"},
-            "<:wizard_potion2:1372986129250255048> Moderate Healing Potion": {"price": 80, "hp_effect": 50, "description": "Restores 50 HP"},
-            "<:wizard_potion3:1372986138465407046> Big Healing Potion": {"price": 160, "hp_effect": 100, "description": "Restores 100 HP"}
+            "<:wizard_potion:1372986090046357657> Minor Healing Potion": {"price": 20, "hp_effect": 10, "description": "-# Restores 10 HP"},
+            "<:wizard_potion2:1372986129250255048> Moderate Healing Potion": {"price": 80, "hp_effect": 50, "description": "-# Restores 50 HP"},
+            "<:wizard_potion3:1372986138465407046> Big Healing Potion": {"price": 160, "hp_effect": 100, "description": "-# Restores 100 HP"}
         }
 
 client = RPGBot()
@@ -334,7 +334,7 @@ async def shop(interaction: discord.Interaction):
     embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Shop", description="Available items:", color=0x8c52ff)
     embed.add_field(name="‎", value="", inline=False)  # Add initial spacing
     for item, details in client.shop_items.items():
-        embed.add_field(name=item, value=f"Price: {details['price']} GP\n{details['description']}", inline=False)
+        embed.add_field(name=item, value=f"- Price: {details['price']} GP\n{details['description']}", inline=False)
         embed.add_field(name="‎", value="", inline=False)  # Add spacing between items
     await interaction.response.send_message(embed=embed)
 
