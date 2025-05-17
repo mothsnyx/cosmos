@@ -345,7 +345,7 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     conn.commit()
     conn.close()
 
-    embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character_name} entered {area}", description=location_descriptions[area], color=0x8c52ff)
+    embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character_name} entered the {area}.", description=location_descriptions[area], color=0x8c52ff)
     embed.set_image(url=client.location_images[area])
     await interaction.response.send_message(embed=embed)
 
@@ -379,7 +379,7 @@ async def leave(interaction: discord.Interaction, character_name: str):
     conn.commit()
     conn.close()
 
-    await interaction.response.send_message(f"{character_name} left {location}.")
+    await interaction.response.send_message(f"<a:Purplestar:1373007899240173710> ┃ {character_name} left the {location}.")
 
 @client.tree.command(name="shop", description="View available items in the shop")
 async def shop(interaction: discord.Interaction):

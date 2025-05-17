@@ -6,7 +6,7 @@ def preload_enemies():
     # High School Enemies
     add_enemy("Possessed Locker", "Animated by a mischievous spirit; they trap students inside.", 0, 5, "High School")
     add_enemy("Drama Club Phantom", "Former students who haunt the auditorium with psychic screeches.", 0, 5, "High School")
-    add_enemy("Library Ghoul", "A hunched figure that smells like old paper.", 0, 5, "High School")
+    add_enemy("Library Ghoul", "A rotting humanoid with sunken eyes, crawling on all fours. It smells like old paper.", 0, 5, "High School")
     add_enemy("Social Feeder", "Teens who need attention literally to survive; violent when ignored.", 0, 5, "High School")
     add_enemy("Janitor", "Looks like the Janitor, but the closer you get, the more distorted he becomes.", 0, 5, "High School")
     add_enemy("Mimic", "A creature that mimics the appearance and abilities of other humans.", 0, 5, "High School")
@@ -28,6 +28,7 @@ def preload_enemies():
     add_enemy("Soot Crow", "A large crow that trails smoke and stares too long.", 5, 10, "Park")
     add_enemy("Smiling Bench Guy", "He always sits in the same spot, too friendly.", 5, 10, "Park")
     add_enemy("Playground Ghost", "Swings alone, vanishes when approached.", 5, 10, "Park")
+    add_enemy("Ghoul", "A rotting humanoid with sunken eyes, crawling on all fours.", 5, 10, "Park")
     add_enemy("Brute", "A powerful, muscle-bound human often used as a bodyguard or frontline fighter. Hits hard, shrugs off pain, and relies on raw strength over skill.", 5, 10, "Park")
     add_enemy("Assassin Meta-Human", "Fast, agile and lethal. Strikes from the shadows with precision. Fragile if caught, but difficult to land a hit on. Equipped with specialized assassin abilities.", 5, 10, "Park")
     add_enemy("Super Soldier", "Enhanced through cybernetics or experimental drugs. Smarter, faster, and tougher than any normal human.", 5, 10, "Park")
