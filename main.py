@@ -597,9 +597,9 @@ class EncounterView(discord.ui.View):
         player_roll = random.randint(1, 20)
         enemy_roll = random.randint(1, 20)
 
-        embed = discord.Embed(title="Combat Roll", color=discord.Color.blue())
-        embed.add_field(name=f"{self.character_name}'s Roll", value=str(player_roll), inline=True)
-        embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+        embed = discord.Embed(title="<a:DiceRoll:1372965997841223700> ┃ Combat Roll", color=0x8c52ff)
+        embed.add_field(name=f"✦ {self.character_name}'s Roll", value=str(player_roll), inline=True)
+        embed.add_field(name=f"✦ {self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
         if player_roll == enemy_roll:
             embed.description = f"Both {self.character_name} and {self.enemy_name} matched each other's moves! Combat continues!"
@@ -647,16 +647,16 @@ class EncounterView(discord.ui.View):
 
                 # Create victory embed
                 victory_embed = discord.Embed(
-                    title="🏆 Combat Victory!",
+                    title="<a:Purplestar:1373007899240173710> ┃ Combat Victory!",
                     description=f"{self.character_name} defeated the {self.enemy_name}!",
-                    color=discord.Color.green()
+                    color=0x8c52ff
                 )
 
                 victory_embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
 
                 if leveled_up:
                     victory_embed.add_field(
-                        name="🎉 LEVEL UP!",
+                        name="<a:verified:1372873503384010826> ┃ LEVEL UP!",
                         value="You've grown stronger!",
                         inline=False
                     )
