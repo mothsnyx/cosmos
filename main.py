@@ -676,15 +676,19 @@ class EncounterView(discord.ui.View):
                 )
 
                 embed.add_field(name="‎", value="", inline=False)
+                victory_embed.add_field(name="‎", value="", inline=False)
                 victory_embed.add_field(name="<:xp:1372873431040659546> Experience Gained", value=f"+{xp_gain} XP", inline=False)
+                victory_embed.add_field(name="‎", value="", inline=False)
 
                 if leveled_up:
                     embed.add_field(name="‎", value="", inline=False)
+                    victory_embed.add_field(name="‎", value="", inline=False)
                     victory_embed.add_field(
                         name="<:levelup:1372873464406347846> ┃ LEVEL UP!",
                         value="-# You've grown stronger!",
                         inline=False
                     )
+                    victory_embed.add_field(name="‎", value="", inline=False)
 
                 # Add loot if found
                 if loot and random.random() < 0.7:  # 70% chance to get loot
