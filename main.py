@@ -49,6 +49,19 @@ class RPGBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
+        
+        # Location images
+        self.location_images = {
+            "High School": "https://i.imgur.com/Q9WkFoJ.png",  # Creepy school hallway
+            "Park": "https://i.imgur.com/XqpVJEL.png",        # Abandoned park
+            "Beach": "https://i.imgur.com/2K7Yqog.png",       # Foggy beach
+            "City": "https://i.imgur.com/N9JJExg.png",        # Dark city street
+            "Sewers": "https://i.imgur.com/JGkowFH.png",      # Dark sewer tunnel
+            "Forest": "https://i.imgur.com/V8pRkD4.png",      # Dark forest
+            "Destroyed Research Site": "https://i.imgur.com/qH8rWYF.png",  # Ruined lab
+            "Abandoned Facility": "https://i.imgur.com/5ZKPpx3.png",      # Abandoned facility
+            "Ash Lake": "https://i.imgur.com/kYkYXtH.png"     # Misty lake
+        }
 
         # Load game data with difficulty levels
         self.areas = {
@@ -333,7 +346,7 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     conn.close()
 
     embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character_name} entered {area}", description=location_descriptions[area], color=0x8c52ff)
-    embed.set_image(url="https://img.freepik.com/premium-photo/horror-creepy-classroom-background-happy-halloween-ai-generated_768733-45236.jpg")
+    embed.set_image(url=client.location_images[area])
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="leave", description="Leave your current location with a specific character")
