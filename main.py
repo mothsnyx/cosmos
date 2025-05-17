@@ -148,6 +148,7 @@ async def list_characters(interaction: discord.Interaction):
     cursor.execute("""
     SELECT character_name, hp, level FROM profiles
     WHERE user_id = ?
+    ORDER BY level DESC
     """, (interaction.user.id,))
     characters = cursor.fetchall()
     conn.close()
@@ -156,12 +157,23 @@ async def list_characters(interaction: discord.Interaction):
         await interaction.response.send_message("<a:warning:1372876834135609404> ┃ You don't have any characters yet!")
         return
 
-    embed = discord.Embed(title="Your Characters", color=discord.Color.blue())
-    for char in characters:
-        max_hp = 100 + (char[2] * 10)  # Base HP + (level * 10)
-        embed.add_field(name=char[0], 
-                       value=f"Level: {char[2]}\nHP: {char[1]}/{max_hp}",
-                       inline=False)
+    embed = discord.Embed(title="<a:Purplestar:1373007899240173710> ┃ Your Characters", color=0x8c52ff)
+    
+    # Group characters by level range
+    level_ranges = [(0, 5), (6, 10), (11, 15), (16, 20)]
+    
+    for min_level, max_level in level_ranges:
+        range_chars = [char for char in characters if min_level <= char[2] <= max_level]
+        if range_chars:
+            embed.add_field(name=f"── ✦ Level {min_level}-{max_level}", value="", inline=False)
+            embed.add_field(name="‎", value="", inline=False)
+            for char in range_chars:
+                max_hp = 100 + (char[2] * 10)  # Base HP + (level * 10)
+                embed.add_field(name=char[0], 
+                              value=f"Level: {char[2]}\nHP: {char[1]}/{max_hp}",
+                              inline=True)
+            embed.add_field(name="‎", value="", inline=False)
+    
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="profile", description="Show a character's profile")
