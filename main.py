@@ -490,14 +490,19 @@ async def loot(interaction: discord.Interaction, character_name: str):
             xp_gain = location_xp.get(current_location, 10)
             leveled_up = update_character_xp(character_name, xp_gain)
 
-            embed = discord.Embed(title="Loot Found!", color=discord.Color.green())
-            embed.add_field(name="Item", value=loot[0])
-            embed.add_field(name="Value", value=f"{loot[2]} GP")
+            embed = discord.Embed(title="<a:Purplestar:1373007899240173710> ┃ Loot Found!", color=0x8c52ff)
+            embed.add_field(name="‎", value="", inline=False)
+            embed.add_field(name="✦ Item Found", value=loot[0], inline=True)
+            embed.add_field(name="‎", value="", inline=False)
+            embed.add_field(name="✦ Value", value=f"{loot[2]} GP", inline=True)
             if loot[3] != 0:
-                embed.add_field(name="HP Effect", value=str(loot[3]))
-            embed.add_field(name="XP Gained", value=f"+{xp_gain} XP", inline=False)
+                embed.add_field(name="‎", value="", inline=False)
+                embed.add_field(name="✦ HP Effect", value=str(loot[3]), inline=True)
+            embed.add_field(name="‎", value="", inline=False)
+            embed.add_field(name="✦ Experience Gained", value=f"+{xp_gain} XP", inline=False)
             if leveled_up:
-                embed.add_field(name="<:levelup:1372873464406347846> LEVEL UP!", value="-# You've grown stronger!", inline=False)
+                embed.add_field(name="‎", value="", inline=False)
+                embed.add_field(name="<a:verified:1372873503384010826> ┃ LEVEL UP!", value="-# You've grown stronger!", inline=False)
             await interaction.response.send_message(embed=embed)
             conn.close()
             return
