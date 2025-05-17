@@ -111,7 +111,7 @@ async def create_character(interaction: discord.Interaction, name: str):
     # Check if character exists
     cursor.execute("SELECT character_name FROM profiles WHERE character_name = ?", (name,))
     if cursor.fetchone():
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ A character with this name already exists!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ A character with this name already exists!")
         conn.close()
         return
 
@@ -138,7 +138,7 @@ async def delete_character(interaction: discord.Interaction, character_name: str
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found or doesn't belong to you!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found or doesn't belong to you!")
         conn.close()
         return
 
@@ -167,7 +167,7 @@ async def list_characters(interaction: discord.Interaction):
     conn.close()
 
     if not characters:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ You don't have any characters yet!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ You don't have any characters yet!")
         return
 
     embed = discord.Embed(title="<a:Purplestar:1373007899240173710> ┃ Your Characters", color=0x8c52ff)
@@ -202,7 +202,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found! Use `/create_character` to make one.")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found! Use `/create_character` to make one.")
         conn.close()
         return
 
@@ -303,13 +303,13 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ You don't have a character! Use `/create_character` to make one.")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ You don't have a character! Use `/create_character` to make one.")
         conn.close()
         return
 
     if area not in client.areas:
         available_areas = ", ".join(client.areas.keys())
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ Invalid area! Available areas: {available_areas}")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ Invalid area! Available areas: {available_areas}")
         conn.close()
         return
 
@@ -331,7 +331,7 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
 
     if char_level < selected_area.min_level:
         await interaction.response.send_message(
-            f"<a:warning:1372876834135609404> ┃ Your level ({char_level}) is too low for {area}! You need to be at least level {selected_area.min_level}."
+            f"<a:tickred:1373240267880267836> ┃ Your level ({char_level}) is too low for {area}! You need to be at least level {selected_area.min_level}."
         )
         conn.close()
         return
@@ -361,12 +361,12 @@ async def leave(interaction: discord.Interaction, character_name: str):
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
     if not character[1]:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ {character_name} is not in any location!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ {character_name} is not in any location!")
         conn.close()
         return
 
@@ -403,12 +403,12 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
     if item not in client.shop_items:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Item not available!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Item not available!")
         conn.close()
         return
 
@@ -419,7 +419,7 @@ async def buy(interaction: discord.Interaction, character_name: str, item: str):
     current_gp = cursor.fetchone()[0]
 
     if current_gp < item_details['price']:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ Not enough GP! You need {item_details['price']} GP, but you only have {current_gp} GP.")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ Not enough GP! You need {item_details['price']} GP, but you only have {current_gp} GP.")
         conn.close()
         return
 
@@ -450,7 +450,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
     character = cursor.fetchone()
 
     if not character or not character[0]:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ {character_name} is not in any location!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ {character_name} is not in any location!")
         conn.close()
         return
 
@@ -502,12 +502,12 @@ async def loot(interaction: discord.Interaction, character_name: str):
             embed.add_field(name="✦ Experience Gained", value=f"+{xp_gain} XP", inline=False)
             if leveled_up:
                 embed.add_field(name="‎", value="", inline=False)
-                embed.add_field(name="<a:verified:1372873503384010826> ┃ LEVEL UP!", value="-# You've grown stronger!", inline=False)
+                embed.add_field(name="<:levelup:1372873464406347846> ┃ LEVEL UP!", value="-# You've grown stronger!", inline=False)
             await interaction.response.send_message(embed=embed)
             conn.close()
             return
 
-        await interaction.response.send_message(f"{character_name} found nothing of value...")
+        await interaction.response.send_message(f"<a:purple:1373242196592951406> . . . {character_name} found nothing of value . . .")
         conn.close()
         return
 
@@ -521,9 +521,9 @@ async def loot(interaction: discord.Interaction, character_name: str):
 
     if enemy:
         embed = discord.Embed(
-            title="Enemy Encounter", 
-            description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n{enemy[1]}", 
-            color=discord.Color.red()
+            title="<a:warning:1372876834135609404> ┃ Enemy Encounter", 
+            description=f"While searching for loot, {character_name} encountered a {enemy[0]}!\n-# {enemy[1]}", 
+            color=0xa60306
         )
         view = EncounterView(character_name, enemy[0], enemy[1], current_location)
         await interaction.response.send_message(embed=embed, view=view)
@@ -670,17 +670,19 @@ class EncounterView(discord.ui.View):
 
                 # Create victory embed
                 victory_embed = discord.Embed(
-                    title="<a:Purplestar:1373007899240173710> ┃ Combat Victory!",
+                    title="<a:PurpleCrown:1373243160855052449> ┃ Combat Victory!",
                     description=f"{self.character_name} defeated the {self.enemy_name}!",
                     color=0x8c52ff
                 )
 
-                victory_embed.add_field(name="💫 Experience Gained", value=f"+{xp_gain} XP", inline=False)
+                embed.add_field(name="‎", value="", inline=False)
+                victory_embed.add_field(name="<:xp:1372873431040659546> Experience Gained", value=f"+{xp_gain} XP", inline=False)
 
                 if leveled_up:
+                    embed.add_field(name="‎", value="", inline=False)
                     victory_embed.add_field(
-                        name="<a:verified:1372873503384010826> ┃ LEVEL UP!",
-                        value="You've grown stronger!",
+                        name="<:levelup:1372873464406347846> ┃ LEVEL UP!",
+                        value="-# You've grown stronger!",
                         inline=False
                     )
 
@@ -698,8 +700,9 @@ class EncounterView(discord.ui.View):
                     loot_text += f"Value: {loot[2]} GP"
                     if loot[3] != 0:
                         loot_text += f"\nHP Effect: {loot[3]}"
+                    embed.add_field(name="‎", value="", inline=False)
                     victory_embed.add_field(
-                        name="🎁 Loot Acquired!",
+                        name="<a:Purplestar:1373007899240173710> Loot Acquired!",
                         value=loot_text,
                         inline=False
                     )
@@ -829,7 +832,7 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
@@ -842,7 +845,7 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
     item = cursor.fetchone()
 
     if not item:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ {character_name} doesn't have a {item_name}!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ {character_name} doesn't have a {item_name}!")
         conn.close()
         return
 
@@ -892,7 +895,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
@@ -905,7 +908,7 @@ async def remove_item(interaction: discord.Interaction, character_name: str, ite
     item = cursor.fetchone()
 
     if not item:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ {character_name} doesn't have a {item_name}!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ {character_name} doesn't have a {item_name}!")
         conn.close()
         return
 
@@ -933,7 +936,7 @@ async def heal(interaction: discord.Interaction, character_name: str, item_name:
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
@@ -948,7 +951,7 @@ async def heal(interaction: discord.Interaction, character_name: str, item_name:
     item = cursor.fetchone()
 
     if not item:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ No healing item named '{item_name}' found in inventory!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ No healing item named '{item_name}' found in inventory!")
         conn.close()
         return
 
@@ -992,12 +995,12 @@ async def fight(interaction: discord.Interaction, character_name: str, enemy_nam
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
     if not character[0]:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ {character_name} is not in any location!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ {character_name} is not in any location!")
         conn.close()
         return
 
@@ -1010,13 +1013,13 @@ async def fight(interaction: discord.Interaction, character_name: str, enemy_nam
     conn.close()
 
     if not enemy:
-        await interaction.response.send_message(f"<a:warning:1372876834135609404> ┃ No enemy named '{enemy_name}' found in {character[0]}!")
+        await interaction.response.send_message(f"<a:tickred:1373240267880267836> ┃ No enemy named '{enemy_name}' found in {character[0]}!")
         return
 
     embed = discord.Embed(
-        title="Enemy Encounter", 
-        description=f"{character_name} challenged {enemy[0]}!\n{enemy[1]}", 
-        color=discord.Color.red()
+        title="<a:Purplestar:1373007899240173710> ┃ Enemy Encounter", 
+        description=f"{character_name} challenged {enemy[0]}!\n-# {enemy[1]}", 
+        color=0x8c52ff
     )
     view = EncounterView(character_name, enemy[0], enemy[1], character[0])
     await interaction.response.send_message(embed=embed, view=view)
@@ -1036,7 +1039,7 @@ async def add_hp(interaction: discord.Interaction, character_name: str, amount: 
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 
@@ -1056,7 +1059,7 @@ async def add_hp(interaction: discord.Interaction, character_name: str, amount: 
     conn.commit()
     conn.close()
 
-    embed = discord.Embed(title="HP Added", color=discord.Color.green())
+    embed = discord.Embed(title="<a:Purplestar:1373007899240173710> ┃ HP Added", color=0x8c52ff)
     embed.add_field(name="Added", value=f"+{amount} HP")
     embed.add_field(name="New HP", value=f"{new_hp}/100")
     await interaction.response.send_message(embed=embed)
@@ -1080,7 +1083,7 @@ async def roll(interaction: discord.Interaction, dice: str = "1d20"):
         await interaction.response.send_message(message)
 
     except ValueError:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Invalid format! Use NdX (e.g., 1d20, 2d6).")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Invalid format! Use NdX (e.g., 1d20, 2d6).")
 
 
 @client.tree.command(name="commands", description="List all available commands")
@@ -1141,7 +1144,7 @@ async def set_level(interaction: discord.Interaction, character_name: str, level
     character = cursor.fetchone()
 
     if not character:
-        await interaction.response.send_message("<a:warning:1372876834135609404> ┃ Character not found!")
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
         conn.close()
         return
 

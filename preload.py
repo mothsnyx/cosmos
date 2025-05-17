@@ -8,7 +8,7 @@ def preload_enemies():
     add_enemy("Drama Club Phantom", "Former students who haunt the auditorium with psychic screeches.", 0, 5, "High School")
     add_enemy("Library Ghoul", "A hunched figure that smells like old paper.", 0, 5, "High School")
     add_enemy("Social Feeder", "Teens who need attention literally to survive; violent when ignored.", 0, 5, "High School")
-    add_enemy("Janitor", "Looks like the janitor, but the closer you get, the more distorted he becomes.", 0, 5, "High School")
+    add_enemy("Janitor", "Looks like the Janitor, but the closer you get, the more distorted he becomes.", 0, 5, "High School")
     add_enemy("Mimic", "A creature that mimics the appearance and abilities of other humans.", 0, 5, "High School")
     add_enemy("Loser", "A pathetic human, who couldn't make his own memories.", 0, 5, "High School")
 
