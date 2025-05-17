@@ -391,6 +391,12 @@ async def shop(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="buy", description="Buy an item from the shop")
+@app_commands.choices(item_name=[
+    app_commands.Choice(name="Minor Healing Potion", value="<:wizard_potion:1372986090046357657> Minor Healing Potion"),
+    app_commands.Choice(name="Moderate Healing Potion", value="<:wizard_potion2:1372986129250255048> Moderate Healing Potion"),
+    app_commands.Choice(name="Big Healing Potion", value="<:wizard_potion3:1372986138465407046> Big Healing Potion")
+])
+
 async def buy(interaction: discord.Interaction, character_name: str, item: str):
     conn = connect()
     cursor = conn.cursor()
