@@ -332,7 +332,8 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
     conn.commit()
     conn.close()
 
-    embed = discord.Embed(title=f"{character_name} entered {area}", description=location_descriptions[area], color=discord.Color.blue())
+    embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character_name} entered {area}", description=location_descriptions[area], color=0x8c52ff)
+    embed.set_image(url="https://img.freepik.com/premium-photo/horror-creepy-classroom-background-happy-halloween-ai-generated_768733-45236.jpg")
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="leave", description="Leave your current location with a specific character")
@@ -598,15 +599,19 @@ class EncounterView(discord.ui.View):
         enemy_roll = random.randint(1, 20)
 
         embed = discord.Embed(title="<a:DiceRoll:1372965997841223700> ┃ Combat Roll", color=0x8c52ff)
+        embed.add_field(name="‎", value="", inline=False)
         embed.add_field(name=f"✦ {self.character_name}'s Roll", value=str(player_roll), inline=True)
+        embed.add_field(name="‎", value="", inline=False)
         embed.add_field(name=f"✦ {self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
+        embed.add_field(name="‎", value="", inline=False)
 
         if player_roll == enemy_roll:
-            embed.description = f"Both {self.character_name} and {self.enemy_name} matched each other's moves! Combat continues!"
+            embed.description = f"Both {self.character_name} and {self.enemy_name} matched each other's moves!"
             max_hp = 100 + (self.char_level * 10)  # Base HP + (level * 10)
-            embed.add_field(name="Your HP", value=f"{self.char_hp}/{max_hp}", inline=True)
-            embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
-            embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
+            embed.add_field(name=f"{self.character_name}'s HP", value=f"{self.char_hp}/{max_hp}", inline=True)
+            embed.add_field(name=f"{self.enemy_name}'s HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
+            embed.add_field(name="‎", value="", inline=False)
+            embed.add_field(name="Combat Continues!", value="-# Choose your next action!", inline=False)
             await interaction.response.send_message(embed=embed, view=self)
             conn.close()
             return
@@ -617,8 +622,8 @@ class EncounterView(discord.ui.View):
             level_multiplier = 1 + (self.char_level * 0.1)  # Each level adds 10% damage
             damage_to_enemy = int(base_damage * level_multiplier)
             self.enemy_hp -= damage_to_enemy
-            embed.description = f"Victory! You won the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
-            embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage (Level bonus: {int((level_multiplier-1)*100)}%)")
+            embed.description = f"You **won** the roll and dealt {damage_to_enemy} damage to the {self.enemy_name}!"
+            embed.add_field(name="Damage Dealt", value=f"You dealt {damage_to_enemy} damage *(Level bonus: {int((level_multiplier-1)*100)}%)*")
             embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
 
             if self.enemy_hp <= 0:
@@ -697,19 +702,22 @@ class EncounterView(discord.ui.View):
             """, (new_hp, self.character_name))
             conn.commit()
 
-            embed.description = f"You lost the first roll and took {damage} damage! Choose to flee or fight again!"
+            embed.description = f"You **lost** the roll and took {damage} damage!"
             max_hp = 100 + (self.char_level * 10)  # Base HP + (level * 10)
-            embed.add_field(name="Your HP", value=f"{new_hp}/{max_hp}", inline=True)
-            embed.add_field(name="Enemy HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
+            embed.add_field(name=f"{self.character_name}'s HP", value=f"{new_hp}/{max_hp}", inline=True)
+            embed.add_field(name=f"{self.enemy_name}'s HP", value=f"{self.enemy_hp}/{self.max_enemy_hp}", inline=True)
 
             if new_hp <= 0:
-                embed.description = f"💀 {self.character_name} was killed by the {self.enemy_name}!"
+                embed.add_field(name="‎", value="", inline=False)
+                embed.description = f"<a:skull_animated:1373222285422493798> {self.character_name} was killed by the {self.enemy_name}!"
                 await interaction.response.send_message(embed=embed)
                 return self.stop()
             else:
-                embed.add_field(name="Combat Continues!", value="Choose your next action!", inline=False)
+                embed.add_field(name="‎", value="", inline=False)
+                embed.add_field(name="Combat Continues!", value="-# Choose your next action!", inline=False)
                 if new_hp <= 10:
-                    embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
+                    embed.add_field(name="‎", value="", inline=False)
+                    embed.add_field(name="<a:warning:1372876834135609404> WARNING!", value=f"{self.character_name} is **critically wounded**!", inline=False)
                 await interaction.response.send_message(embed=embed, view=self)
             conn.close()
 
@@ -763,7 +771,8 @@ class SecondChanceView(discord.ui.View):
         embed.add_field(name=f"{self.enemy_name}'s Roll", value=str(enemy_roll), inline=True)
 
         if player_roll > enemy_roll:
-            embed.description = f"After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
+            embed.add_field(name="‎", value="", inline=False)
+            embed.description = f"<a:shooting_stars:1373223111758971142> After a tough battle, {self.character_name} managed to defeat the {self.enemy_name}!"
         else:
             # Calculate double damage on second loss
             damage = await self.calculate_damage(self.location, is_second_roll=True)
@@ -776,13 +785,14 @@ class SecondChanceView(discord.ui.View):
             """, (new_hp, self.character_name))
             conn.commit()
 
-            embed.description = f"🪦 {self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
+            embed.add_field(name="‎", value="", inline=False)
+            embed.description = f"{self.character_name} was defeated by the {self.enemy_name} after taking {damage} damage!"
             embed.add_field(name="HP Remaining", value=f"{new_hp}/100", inline=False)
 
             if new_hp == 0:
-                embed.add_field(name="💀 DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
+                embed.add_field(name="<a:skull_animated:1373222285422493798> DEATH", value=f"{self.character_name} has fallen in battle!", inline=False)
             elif new_hp <= 10:
-                embed.add_field(name="⚠️ WARNING", value=f"{self.character_name} is critically wounded!", inline=False)
+                embed.add_field(name="<a:warning:1372876834135609404> WARNING", value=f"{self.character_name} is **critically wounded**!", inline=False)
 
             await interaction.response.send_message(embed=embed)
             conn.close()
