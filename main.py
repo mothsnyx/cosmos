@@ -52,15 +52,15 @@ class RPGBot(discord.Client):
         
         # Location images
         self.location_images = {
-            "High School": "https://i.imgur.com/Q9WkFoJ.png",  # Creepy school hallway
-            "Park": "https://i.imgur.com/XqpVJEL.png",        # Abandoned park
-            "Beach": "https://i.imgur.com/2K7Yqog.png",       # Foggy beach
-            "City": "https://i.imgur.com/N9JJExg.png",        # Dark city street
-            "Sewers": "https://i.imgur.com/JGkowFH.png",      # Dark sewer tunnel
-            "Forest": "https://i.imgur.com/V8pRkD4.png",      # Dark forest
-            "Destroyed Research Site": "https://i.imgur.com/qH8rWYF.png",  # Ruined lab
-            "Abandoned Facility": "https://i.imgur.com/5ZKPpx3.png",      # Abandoned facility
-            "Ash Lake": "https://i.imgur.com/kYkYXtH.png"     # Misty lake
+            "High School": "https://img.freepik.com/premium-photo/horror-creepy-classroom-background-happy-halloween-ai-generated_768733-45236.jpg",  # Creepy school hallway
+            "Park": "https://images.stockcake.com/public/7/e/8/7e8e8ce1-f6df-4aaf-be35-5613a00e83b6_large/misty-playground-night-stockcake.jpg",        # Abandoned park
+            "Beach": "https://www.shutterstock.com/shutterstock/videos/27109123/thumb/1.jpg?ip=x480",       # Foggy beach
+            "City": "https://media.istockphoto.com/id/655391120/photo/dark-gritty-alleyway.jpg?s=612x612&w=0&k=20&c=1MJph3u_Mzj0-UKn-lfsbuuH0VCtQJC97fr_TkC7NGI=",        # Dark city street
+            "Sewers": "https://i.pinimg.com/736x/17/81/13/178113127a3288af5a3accdff0520354.jpg",      # Dark sewer tunnel
+            "Forest": "https://t3.ftcdn.net/jpg/01/88/23/12/360_F_188231209_KPPc1OfDIq7OfOOL8jSq5HHlQscmPhca.jpg",      # Dark forest
+            "Destroyed Research Site": "https://img.freepik.com/premium-photo/discover-secrets-abandoned-lab-uncover-truth-experiments-that-took-place-within-these-walls_36682-13730.jpg",  # Ruined lab
+            "Abandoned Facility": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f700b7b2-208d-46fc-986e-38d7dc1ad83a/daju7x4-b64e64ef-e67e-4b84-913e-b18a7266835d.jpg/v1/fill/w_900,h_461,q_75,strp/abandoned_lab_by_milkmom_daju7x4-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDYxIiwicGF0aCI6IlwvZlwvZjcwMGI3YjItMjA4ZC00NmZjLTk4NmUtMzhkN2RjMWFkODNhXC9kYWp1N3g0LWI2NGU2NGVmLWU2N2UtNGI4NC05MTNlLWIxOGE3MjY2ODM1ZC5qcGciLCJ3aWR0aCI6Ijw9OTAwIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmltYWdlLm9wZXJhdGlvbnMiXX0.KSsjBXNkh5d7pT5Ob7ybfUdBE8ajJrh4K51Zwq2Oyzs",      # Abandoned facility
+            "Ash Lake": "https://darksouls.wiki.fextralife.com/file/Dark-Souls/20111108220734.jpg"     # Misty lake
         }
 
         # Load game data with difficulty levels
@@ -252,11 +252,11 @@ async def profile(interaction: discord.Interaction, character_name: str):
         # Sort items into categories
         for item_key, count in item_counts.items():
             name, value, hp_effect = item_key
-            item_text = f"• {name} (Value: {value} GP"
+            item_text = f"• {name} (*{value} GP*"
             if hp_effect != 0:
-                item_text += f", HP: {hp_effect}"
+                item_text += f", *HP: {hp_effect}*"
             if count > 1:
-                item_text += f") [x{count}]"
+                item_text += f") **[x{count}]**"
             else:
                 item_text += ")"
                 
@@ -318,8 +318,8 @@ async def explore(interaction: discord.Interaction, character_name: str, area: s
 
     # Location descriptions
     location_descriptions = {
-        "High School": "A normal-looking High School with noisy classrooms, messy lockers and weird rumors in the halls. It's eerily silent at night.",
-        "Park": "A run-down park with broken swings, old trails, and overgrown paths. It feels frozen in time.",
+        "High School": "By day, it’s a prestigious High School filled with light and order, but when night falls, the halls twist into something dark and unrecognizable.",
+        "Park": "During the day, the park is full of life and laughter. But at night the lights flicker weakly, the playground lies broken and still.",
         "Beach": "A quiet, foggy shore with broken docks and scattered trash. The waves carry whispers.",
         "City": "Busy streets, dark alleys and strange people. The deeper you go, the more dangerous it gets.",
         "Sewers": "Dark, damp tunnels under the city. It smells bad and worse things live down here.",
@@ -465,7 +465,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
         """, (current_location,))
         loot = cursor.fetchone()
 
-        if loot and random.random() < 0.7:  # 70% chance to get the loot
+        if loot and random.random() < 0.8:  # 70% chance to get the loot
             # Add item to inventory
             cursor.execute("""
             INSERT INTO inventory (character_id, item_name, description, value, hp_effect)
@@ -497,7 +497,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
                 embed.add_field(name="HP Effect", value=str(loot[3]))
             embed.add_field(name="XP Gained", value=f"+{xp_gain} XP", inline=False)
             if leveled_up:
-                embed.add_field(name="🎉 LEVEL UP!", value="You've grown stronger!", inline=False)
+                embed.add_field(name="<:levelup:1372873464406347846> LEVEL UP!", value="-# You've grown stronger!", inline=False)
             await interaction.response.send_message(embed=embed)
             conn.close()
             return
