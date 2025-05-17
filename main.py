@@ -829,7 +829,7 @@ async def sell_item(interaction: discord.Interaction, character_name: str, item_
     conn.commit()
     conn.close()
 
-    await interaction.response.send_message(f"Sold {item_name} for {sell_value} GP!")
+    await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ Sold {item_name} for {sell_value} GP!")
 
 
 
@@ -840,7 +840,7 @@ async def weather(interaction: discord.Interaction):
         client.current_weather = random.choice(client.weather)
     elif random.random() < 0.3:  # 30% chance to change weather
         client.current_weather = random.choice(client.weather)
-    await interaction.response.send_message(f"<:WeatherIcon:1372980092027928726> ┃ Current weather: **{client.current_weather}**")
+    await interaction.response.send_message(f"<a:Purplestar:1373007899240173710> ┃ Current weather: **{client.current_weather}**")
 
 # Register all commands at startup
 @client.event
@@ -1127,7 +1127,7 @@ async def set_level(interaction: discord.Interaction, character_name: str, level
     conn.commit()
     conn.close()
 
-    await interaction.response.send_message(f"{character_name}'s level has been set to {level}.")
+    await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {character_name}'s level has been set to {level}.")
 
 try:
     client.run(os.getenv('DISCORD_TOKEN'))
