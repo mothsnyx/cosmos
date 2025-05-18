@@ -49,7 +49,7 @@ class RPGBot(discord.Client):
         self.tree = app_commands.CommandTree(self)
         self.weather = ["Sunny", "Rainy", "Stormy", "Foggy", "Clear"]
         self.current_weather = "Sunny"
-        
+
         # Location images
         self.location_images = {
             "High School": "https://img.freepik.com/premium-photo/horror-creepy-classroom-background-happy-halloween-ai-generated_768733-45236.jpg",  # Creepy school hallway
@@ -117,9 +117,9 @@ async def create_character(interaction: discord.Interaction, name: str):
 
     # Create character
     cursor.execute("""
-    INSERT INTO profiles (user_id, character_name, hp, level)
-    VALUES (?, ?, ?, ?)
-    """, (interaction.user.id, name, 100, 0))
+    INSERT INTO profiles (user_id, character_name, hp, level, gp)
+    VALUES (?, ?, ?, ?, ?)
+    """, (interaction.user.id, name, 100, 0, 200))
     conn.commit()
     conn.close()
 
@@ -159,7 +159,7 @@ async def list_characters(interaction: discord.Interaction):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT character_name, hp, level FROM profiles
+    SELECT character_name, hp, level, nickname FROM profiles
     WHERE user_id = ?
     ORDER BY level DESC
     """, (interaction.user.id,))
@@ -171,10 +171,10 @@ async def list_characters(interaction: discord.Interaction):
         return
 
     embed = discord.Embed(title="<a:Purplestar:1373007899240173710> ┃ Your Characters", color=0x8c52ff)
-    
+
     # Group characters by level range
     level_ranges = [(0, 5), (6, 10), (11, 15), (16, 20)]
-    
+
     for min_level, max_level in level_ranges:
         range_chars = [char for char in characters if min_level <= char[2] <= max_level]
         if range_chars:
@@ -182,11 +182,14 @@ async def list_characters(interaction: discord.Interaction):
             embed.add_field(name="‎", value="", inline=False)
             for char in range_chars:
                 max_hp = 100 + (char[2] * 10)  # Base HP + (level * 10)
-                embed.add_field(name=char[0], 
+                display_name = char[0]
+                if char[3]:  # If nickname exists
+                    display_name = f"{char[0]} ({char[3]})"
+                embed.add_field(name=display_name, 
                               value=f"Level: {char[2]}\nHP: {char[1]}/{max_hp}",
                               inline=True)
             embed.add_field(name="‎", value="", inline=False)
-    
+
     await interaction.response.send_message(embed=embed)
 
 @client.tree.command(name="profile", description="Show a character's profile")
@@ -195,7 +198,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
     cursor = conn.cursor()
 
     cursor.execute("""
-    SELECT p.character_name, p.hp, p.level, p.active_location, p.character_id, p.xp
+    SELECT p.character_name, p.hp, p.level, p.active_location, p.character_id, p.xp, p.nickname
     FROM profiles p
     WHERE p.user_id = ? AND p.character_name = ?
     """, (interaction.user.id, character_name))
@@ -214,8 +217,11 @@ async def profile(interaction: discord.Interaction, character_name: str):
     gp = cursor.fetchone()[0]
 
     max_hp = 100 + (character[2] * 10)  # Base HP + (level * 10)
-    embed = discord.Embed(title=f"<a:Purplestar:1373007899240173710> ┃ {character[0]}'s Profile", color=0x8c52ff)
-    
+    title = f"<a:Purplestar:1373007899240173710> ┃ {character[0]}'s Profile"
+    if character[6]:
+         title = f"<a:Purplestar:1373007899240173710> ┃ {character[0]} ({character[6]})'s Profile"
+    embed = discord.Embed(title=title, color=0x8c52ff)
+
     # Character Stats Section
     embed.add_field(name="── ✦ Character Stats", value="", inline=False)
     embed.add_field(name="‎", value="", inline=False)
@@ -229,7 +235,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
     embed.add_field(name="‎", value="", inline=False)
     embed.add_field(name="<:34647adminglow:1373020846209372250> Location", value=character[3] or "Not in any location", inline=True)
     embed.add_field(name="‎", value="", inline=False)
-    
+
     # Get inventory items
     cursor.execute("""
     SELECT item_name, description, value, hp_effect 
@@ -242,13 +248,13 @@ async def profile(interaction: discord.Interaction, character_name: str):
         # Separate items into categories
         consumables = []
         sellable_items = []
-        
+
         # Count duplicate items
         item_counts = {}
         for item in items:
             item_key = (item[0], item[2], item[3])  # name, value, hp_effect
             item_counts[item_key] = item_counts.get(item_key, 0) + 1
-            
+
         # Sort items into categories
         for item_key, count in item_counts.items():
             name, value, hp_effect = item_key
@@ -259,7 +265,7 @@ async def profile(interaction: discord.Interaction, character_name: str):
                 item_text += f") **[x{count}]**"
             else:
                 item_text += ")"
-                
+
             if hp_effect > 0:
                 consumables.append(item_text)
             else:
@@ -268,11 +274,11 @@ async def profile(interaction: discord.Interaction, character_name: str):
         # Add Consumables Section
         if consumables:
             embed.add_field(name="── ✦ Consumables", value="\n".join(consumables), inline=False)
-            
+
         # Add Sellable Items Section
         if sellable_items:
             embed.add_field(name="── ✦ Sellable Items", value="\n".join(sellable_items), inline=False)
-            
+
     else:
         embed.add_field(name="── ✦ Inventory", value="Empty", inline=False)
 
@@ -534,10 +540,12 @@ async def loot(interaction: discord.Interaction, character_name: str):
         await interaction.response.send_message(embed=embed, view=view)
     else:
         await interaction.response.send_message(f"{character_name} found nothing of value...")
-    
+
     conn.close()
 
-# Encounter system variables
+# Encounter system```python
+# Adding commands for changing character names and nicknames, updating database schema, and modifying profile/list_characters displays.
+variables
 active_encounters = {}
 
 class EncounterView(discord.ui.View):
@@ -1084,11 +1092,11 @@ async def roll(interaction: discord.Interaction, dice: str = "1d20"):
         rolls = [random.randint(1, sides) for _ in range(num)]
         total = sum(rolls)
         roll_results = ", ".join(map(str, rolls))
-        
+
         message = f"<a:DiceRoll:1372965997841223700> ┃ You rolled **{roll_results}**!"
         if len(rolls) > 1:
             message += f"\n⤷ Total: **{total}**"
-            
+
         await interaction.response.send_message(message)
 
     except ValueError:
@@ -1100,7 +1108,7 @@ async def commands(interaction: discord.Interaction):
     embed = discord.Embed(title="<:AdminIcon:1372980092027928726> ┃ Available Commands", color=0x8c52ff)
 
     embed.add_field(name="‎", value="", inline=False)
-    
+
     # Character Management
     embed.add_field(name="<a:Animated_Arrow_Purple:1372976728435331163> Character Commands", value="""
 `/create_character` - Create a new character
@@ -1108,6 +1116,8 @@ async def commands(interaction: discord.Interaction):
 `/list_characters` - List all your characters
 `/profile` - Show detailed character information
 `/set_level` - Manually set character level
+`/rename_character` - Rename your character
+`/set_nickname` - Set a nickname for your character
 
 """, inline=False)
 
@@ -1169,6 +1179,82 @@ async def set_level(interaction: discord.Interaction, character_name: str, level
 
     await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {character_name}'s level has been set to {level}.")
 
+@client.tree.command(name="rename_character", description="Rename your character")
+async def rename_character(interaction: discord.Interaction, old_name: str, new_name: str):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, old_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
+        conn.close()
+        return
+
+     # Check if the new name is already taken
+    cursor.execute("SELECT character_name FROM profiles WHERE character_name = ?", (new_name,))
+    if cursor.fetchone():
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ A character with this name already exists!")
+        conn.close()
+        return
+
+    # Update character's name
+    cursor.execute("""
+    UPDATE profiles
+    SET character_name = ?
+    WHERE character_id = ?
+    """, (new_name, character[0]))
+
+    # Update inventory items to the new character name
+    cursor.execute("""
+    UPDATE inventory
+    SET character_id = (SELECT character_id FROM profiles WHERE character_name = ?)
+    WHERE character_id = ?
+    """, (new_name, character[0]))
+
+    conn.commit()
+    conn.close()
+
+    await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {old_name}'s name has been changed to {new_name}.")
+
+@client.tree.command(name="set_nickname", description="Set a nickname for your character")
+async def set_nickname(interaction: discord.Interaction, character_name: str, nickname: str = None):
+    conn = connect()
+    cursor = conn.cursor()
+
+    # Check if character exists and belongs to user
+    cursor.execute("""
+    SELECT character_id FROM profiles
+    WHERE user_id = ? AND character_name = ?
+    """, (interaction.user.id, character_name))
+    character = cursor.fetchone()
+
+    if not character:
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Character not found!")
+        conn.close()
+        return
+
+    # Update character's nickname
+    cursor.execute("""
+    UPDATE profiles
+    SET nickname = ?
+    WHERE character_id = ?
+    """, (nickname, character[0]))
+
+    conn.commit()
+    conn.close()
+
+    if nickname:
+        await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {character_name}'s nickname has been set to {nickname}.")
+    else:
+        await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {character_name}'s nickname has been removed.")
+
+# Adding database schema changes and commands for renaming characters and setting nicknames.
 try:
     client.run(os.getenv('DISCORD_TOKEN'))
 except KeyboardInterrupt:

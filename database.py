@@ -15,6 +15,7 @@ def setup_database():
         character_id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         character_name TEXT,
+        nickname TEXT,
         hp INTEGER,
         level INTEGER DEFAULT 0,
         xp INTEGER DEFAULT 0,
@@ -23,6 +24,15 @@ def setup_database():
         gp INTEGER DEFAULT 0
     )
     """)
+
+    # Add nickname column if it doesn't exist
+    cursor.execute("""
+    SELECT name FROM pragma_table_info('profiles') WHERE name='nickname'
+    """)
+    if not cursor.fetchone():
+        cursor.execute("""
+        ALTER TABLE profiles ADD COLUMN nickname TEXT
+        """)
 
     # Add gp column if it doesn't exist
     cursor.execute("""
