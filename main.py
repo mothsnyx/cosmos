@@ -1118,6 +1118,7 @@ async def commands(interaction: discord.Interaction):
 `/set_level` - Manually set character level
 `/rename_character` - Rename your character
 `/set_nickname` - Set a nickname for your character
+`/choose` - Randomly choose between multiple options
 
 """, inline=False)
 
