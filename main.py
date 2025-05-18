@@ -545,7 +545,7 @@ async def loot(interaction: discord.Interaction, character_name: str):
 
 # Encounter system```python
 # Adding commands for changing character names and nicknames, updating database schema, and modifying profile/list_characters displays.
-variables
+# GLobal variables
 active_encounters = {}
 
 class EncounterView(discord.ui.View):
