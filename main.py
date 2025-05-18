@@ -1220,6 +1220,21 @@ async def rename_character(interaction: discord.Interaction, old_name: str, new_
     conn.commit()
     conn.close()
 
+
+
+@client.tree.command(name="choose", description="Randomly choose between multiple options")
+async def choose(interaction: discord.Interaction, options: str):
+    # Split options by commas and clean up whitespace
+    choices = [opt.strip() for opt in options.split(',') if opt.strip()]
+    
+    if len(choices) < 2:
+        await interaction.response.send_message("<a:tickred:1373240267880267836> ┃ Please provide at least 2 options, separated by commas!")
+        return
+        
+    chosen = random.choice(choices)
+    await interaction.response.send_message(f"<a:DiceRoll:1372965997841223700> ┃ I choose: **{chosen}**!")
+
+
     await interaction.response.send_message(f"<a:verified:1372873503384010826> ┃ {old_name}'s name has been changed to {new_name}.")
 
 @client.tree.command(name="set_nickname", description="Set a nickname for your character")
